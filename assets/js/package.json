@@ -1,0 +1,13 @@
+{
+  "name": "my-library",
+  "version": "1.0.0",
+  "source": "src/index.js",
+  "main": "main.js",
+  "scripts": {
+    "watch": "parcel watch",
+    "build": "parcel build"
+  },
+  "devDependencies": {
+    "parcel": "^2.7.0"
+  }
+}
