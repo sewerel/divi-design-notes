@@ -7,7 +7,7 @@ export default function shadowDropDown(marker, element){
         marker: marker,
         active: false,
         textArea: null,
-        ajaxing: false,
+        is_ajaxing: false,
         mensions: [],
         openClose:()=>{
             if(self.active){
@@ -40,19 +40,51 @@ export default function shadowDropDown(marker, element){
         setPosition: ()=>{
             if(!self.active) return;
             const rects = self.marker.element.getBoundingClientRect();
+            const fromLeft = rects.x < 175 ? 1 : 0;
+            const fromRight = ((innerWidth - rects.right) < 175) ? 3 : 0;
+            const fromBottom = ((innerHeight - rects.bottom) < 200) ? 5 : 0;
+            let translate = '(-50%, 0, 0)';
+
+            if(fromBottom || fromRight || fromLeft){
+                switch(fromBottom + fromLeft + fromRight) {
+                    case 1: //Left
+                        translate = `(-${rects.x}px,0,0)`
+                        break;
+                    case 3: //Right
+                        translate = `(-${350-(innerWidth - rects.right)}px,0,0)`
+                        break;
+                    case 4: //Left & Right
+                        translate = `(0,0,0)`
+                        break;
+                    case 5: //Bottom
+                        translate = `(-50%,-100%,0) translateY(-30px)`
+                        break;
+                    case 6: //Left & Bottom
+                        translate = `(-${rects.x}px,-100%,0) translateY(-30px)`
+                        break;
+                    case 8: //Right & Bottom
+                        translate = `(-${350-(innerWidth - rects.right)}px,-100%,0) translateY(-30px)`
+                        break;
+                    case 9: //Left & Right & Bottom
+                        translate = `(0,-100%,0) translateY(-30px)`
+                        break;
+                    }
+            }
+            
             self.element.style.top = `${rects.bottom}px`;
             self.element.style.left = `${rects.x}px`;
+            self.element.style.transform = `translate3d${translate}`;
         },
         clear(){
             self.textArea.value = '';
         },
         clicked: (e)=>{
-            if(!e.target.dataset.action || self.ajaxing) return;
-            self.ajaxing = true;
+            if(!e.target.dataset.action || self.is_ajaxing) return;
+            self.ajaxing(true);
             if(e.target.dataset.action === 'cancel'){
                 self.clear();
                 self.marker.reset();
-                self.ajaxing = false;
+                self.ajaxing(false);
             }
             if(e.target.dataset.action === 'create'){
                 self.create();
@@ -62,7 +94,7 @@ export default function shadowDropDown(marker, element){
         create:()=>{
             if(!self.textArea.value.trim()){
                 self.textArea.value = '';
-                self.ajaxing = false;
+                self.ajaxing(false);
                 return;
             }
             const data = new FormData();
@@ -83,9 +115,22 @@ export default function shadowDropDown(marker, element){
                     self.marker.reset();
                     diviDesignNotesAPI.createNote(obj.html)
                 }
-                self.ajaxing = false;
+                self.ajaxing(false);
             })
             
+        },
+        ajaxing(flag = null){
+            if(flag === null){
+                return self.is_ajaxing;
+            }
+            if(flag){
+                self.element.classList.add('ajaxing');
+                self.is_ajaxing = true;
+            }
+            if(!flag){
+                self.element.classList.remove('ajaxing');
+                self.is_ajaxing = false;
+            }
         },
         init: ()=>{
             self.textArea = self.element.querySelector('textarea');

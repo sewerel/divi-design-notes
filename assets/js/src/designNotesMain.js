@@ -143,6 +143,11 @@ export default function DesignNotesMain(button, dataElement){
                 return;
             });
         },
+        delete($marker){
+            $marker.dropDown.element.remove();
+            $marker.element.remove();
+            self.notes.splice(self.notes.indexOf($marker),1);
+        },
         init(){
             //Users related
             self.usersNode.id = 'design_notes_user_list';

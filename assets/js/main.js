@@ -51,7 +51,7 @@ function $04cb2e1132857924$export$2e2bcd8739ae039(marker, element) {
         marker: marker,
         active: false,
         textArea: null,
-        ajaxing: false,
+        is_ajaxing: false,
         mensions: [],
         openClose () {
             if (self.active) self.close();
@@ -79,16 +79,43 @@ function $04cb2e1132857924$export$2e2bcd8739ae039(marker, element) {
         setPosition () {
             if (!self.active) return;
             const rects = self.marker.element.getBoundingClientRect();
+            const fromLeft = rects.x < 175 ? 1 : 0;
+            const fromRight = innerWidth - rects.right < 175 ? 3 : 0;
+            const fromBottom = innerHeight - rects.bottom < 200 ? 5 : 0;
+            let translate = "(-50%, 0, 0)";
+            if (fromBottom || fromRight || fromLeft) switch(fromBottom + fromLeft + fromRight){
+                case 1:
+                    translate = `(-${rects.x}px,0,0)`;
+                    break;
+                case 3:
+                    translate = `(-${350 - (innerWidth - rects.right)}px,0,0)`;
+                    break;
+                case 4:
+                    translate = `(0,0,0)`;
+                    break;
+                case 5:
+                    translate = `(-50%,-100%,0) translateY(-30px)`;
+                    break;
+                case 6:
+                    translate = `(-${rects.x}px,-100%,0) translateY(-30px)`;
+                    break;
+                case 8:
+                    translate = `(-${350 - (innerWidth - rects.right)}px,-100%,0) translateY(-30px)`;
+                    break;
+                case 9:
+                    translate = `(0,-100%,0) translateY(-30px)`;
+                    break;
+            }
             self.element.style.top = `${rects.bottom}px`;
             self.element.style.left = `${rects.x}px`;
-            return self;
+            self.element.style.transform = `translate3d${translate}`;
         },
         clicked (e) {
-            if (!e.target.dataset.action || self.ajaxing) return;
-            self.ajaxing = true;
+            if (!e.target.dataset.action || self.is_ajaxing) return;
+            self.ajaxing(true);
             if (e.target.dataset.action === "cancel") {
                 self.close();
-                self.ajaxing = false;
+                self.ajaxing(false);
                 return;
             }
             if (e.target.dataset.action === "resolve") {
@@ -96,17 +123,16 @@ function $04cb2e1132857924$export$2e2bcd8739ae039(marker, element) {
                 return;
             }
             if (e.target.dataset.action === "post") {
-                console.log("posting");
                 self.post();
                 return;
             }
             if (e.target.dataset.action === "delete") {
-                self.close();
+                self.delete();
                 return;
             }
         },
         resolve () {
-            self.ajaxing = true;
+            self.ajaxing(true);
             const data = new FormData();
             data.append("type", "resolve");
             data.append("id", self.marker.id);
@@ -114,16 +140,19 @@ function $04cb2e1132857924$export$2e2bcd8739ae039(marker, element) {
                 if (res.ok) return res.json();
             }).then((json)=>{
                 console.log(json);
-                self.ajaxing = false;
+                self.marker.element.classList.add("resolved");
+                self.element.classList.add("resolved");
+                self.ajaxing(false);
+            }).catch((err)=>{
+                self.ajaxing(false);
             });
-            self.element.querySelector("[data-action=resolve]").remove();
         },
         post () {
             if (!self.textArea.value.trim()) {
                 self.textArea.value = "";
                 return;
             }
-            self.ajaxing = true;
+            self.ajaxing(true);
             const data = new FormData();
             if (self.checkMensions(self.textArea.value)) data.append("mensions", self.mensions.join(","));
             data.append("type", "post");
@@ -139,8 +168,31 @@ function $04cb2e1132857924$export$2e2bcd8739ae039(marker, element) {
                     body.insertAdjacentHTML("beforeend", obj.html);
                     self.textArea.value = "";
                 }
-                self.ajaxing = false;
+                self.ajaxing(false);
             });
+        },
+        delete () {
+            self.ajaxing(true);
+            const data = new FormData();
+            data.append("type", "delete");
+            data.append("note_id", self.marker.id);
+            diviDesignNotesAPI.ajax(data).then((res)=>{
+                if (res.ok) return res.json();
+            }).then((obj)=>{
+                console.log(obj);
+                if (obj.parent) diviDesignNotesAPI.delete(self.marker);
+            });
+        },
+        ajaxing (flag = null) {
+            if (flag === null) return self.is_ajaxing;
+            if (flag) {
+                self.element.classList.add("ajaxing");
+                self.is_ajaxing = true;
+            }
+            if (!flag) {
+                self.element.classList.remove("ajaxing");
+                self.is_ajaxing = false;
+            }
         },
         init () {
             self.textArea = self.element.querySelector("textarea");
@@ -218,7 +270,7 @@ function $446359f2ef3c174b$export$2e2bcd8739ae039(marker, element) {
         marker: marker,
         active: false,
         textArea: null,
-        ajaxing: false,
+        is_ajaxing: false,
         mensions: [],
         openClose: ()=>{
             if (self.active) self.close();
@@ -246,19 +298,47 @@ function $446359f2ef3c174b$export$2e2bcd8739ae039(marker, element) {
         setPosition: ()=>{
             if (!self.active) return;
             const rects = self.marker.element.getBoundingClientRect();
+            const fromLeft = rects.x < 175 ? 1 : 0;
+            const fromRight = innerWidth - rects.right < 175 ? 3 : 0;
+            const fromBottom = innerHeight - rects.bottom < 200 ? 5 : 0;
+            let translate = "(-50%, 0, 0)";
+            if (fromBottom || fromRight || fromLeft) switch(fromBottom + fromLeft + fromRight){
+                case 1:
+                    translate = `(-${rects.x}px,0,0)`;
+                    break;
+                case 3:
+                    translate = `(-${350 - (innerWidth - rects.right)}px,0,0)`;
+                    break;
+                case 4:
+                    translate = `(0,0,0)`;
+                    break;
+                case 5:
+                    translate = `(-50%,-100%,0) translateY(-30px)`;
+                    break;
+                case 6:
+                    translate = `(-${rects.x}px,-100%,0) translateY(-30px)`;
+                    break;
+                case 8:
+                    translate = `(-${350 - (innerWidth - rects.right)}px,-100%,0) translateY(-30px)`;
+                    break;
+                case 9:
+                    translate = `(0,-100%,0) translateY(-30px)`;
+                    break;
+            }
             self.element.style.top = `${rects.bottom}px`;
             self.element.style.left = `${rects.x}px`;
+            self.element.style.transform = `translate3d${translate}`;
         },
         clear () {
             self.textArea.value = "";
         },
         clicked: (e)=>{
-            if (!e.target.dataset.action || self.ajaxing) return;
-            self.ajaxing = true;
+            if (!e.target.dataset.action || self.is_ajaxing) return;
+            self.ajaxing(true);
             if (e.target.dataset.action === "cancel") {
                 self.clear();
                 self.marker.reset();
-                self.ajaxing = false;
+                self.ajaxing(false);
             }
             if (e.target.dataset.action === "create") {
                 self.create();
@@ -268,7 +348,7 @@ function $446359f2ef3c174b$export$2e2bcd8739ae039(marker, element) {
         create: ()=>{
             if (!self.textArea.value.trim()) {
                 self.textArea.value = "";
-                self.ajaxing = false;
+                self.ajaxing(false);
                 return;
             }
             const data = new FormData();
@@ -287,8 +367,19 @@ function $446359f2ef3c174b$export$2e2bcd8739ae039(marker, element) {
                     self.marker.reset();
                     diviDesignNotesAPI.createNote(obj.html);
                 }
-                self.ajaxing = false;
+                self.ajaxing(false);
             });
+        },
+        ajaxing (flag = null) {
+            if (flag === null) return self.is_ajaxing;
+            if (flag) {
+                self.element.classList.add("ajaxing");
+                self.is_ajaxing = true;
+            }
+            if (!flag) {
+                self.element.classList.remove("ajaxing");
+                self.is_ajaxing = false;
+            }
         },
         init: ()=>{
             self.textArea = self.element.querySelector("textarea");
@@ -500,6 +591,11 @@ function $b43c1ccb12885cba$export$2e2bcd8739ae039(button, dataElement) {
                 self.notes.push((0, $f264c4e0c2cd7c0b$export$2e2bcd8739ae039)(node).init());
                 return;
             });
+        },
+        delete ($marker) {
+            $marker.dropDown.element.remove();
+            $marker.element.remove();
+            self.notes.splice(self.notes.indexOf($marker), 1);
         },
         init () {
             //Users related
