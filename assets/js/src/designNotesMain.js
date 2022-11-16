@@ -1,6 +1,7 @@
 import {select, on, off, renderElement} from './helpers.js';
 import Marker from './marker';
 import shadowMarker from './shadowMarker';
+import Menu from './menu';
 
 export default function DesignNotesMain(button, dataElement){
     const self = {
@@ -10,6 +11,7 @@ export default function DesignNotesMain(button, dataElement){
 
         data : JSON.parse(select('#divi_design_notes_json').textContent),
         notes: [],
+        menu: null,
         hoveredElement : false,
         user : '',
         markerActive : false,
@@ -149,6 +151,13 @@ export default function DesignNotesMain(button, dataElement){
             self.notes.splice(self.notes.indexOf($marker),1);
         },
         init(){
+            if( self.markerActive ){
+                self.stopMarker()
+            }
+            if(self.menu){return;}
+            //Menu
+            self.menu = Menu(self.pageContainer);
+            self.menu.init();
             //Users related
             self.usersNode.id = 'design_notes_user_list';
             self.data.users.forEach(item =>{
@@ -169,7 +178,7 @@ export default function DesignNotesMain(button, dataElement){
             self.shadowMarker = shadowMarker(elem).init();
 
             on('click', self.chooseUser, self.usersNode);
-            on('click', self.buttonClicked, self.button);
+            //on('click', self.buttonClicked, self.button);
             on('scroll', self.maybeSetTimeout);
             on('resize', self.maybeSetTimeout, window);
             on('input', self.inputHandler);

@@ -2,7 +2,7 @@ import { on } from "./helpers";
 
 
 export default function shadowDropDown(marker, element){
-    const self = {
+    const self = { 
         element: element,
         marker: marker,
         active: false,
@@ -17,7 +17,7 @@ export default function shadowDropDown(marker, element){
             }
         },
         open: () =>{
-            diviDesignNotesAPI.closeDropdowns();
+            window[Symbol.for('diviDesignNotesAPI')].closeDropdowns();
             self.element.classList.add('open');
             self.active = true;
             self.setPosition()
@@ -26,16 +26,18 @@ export default function shadowDropDown(marker, element){
             self.element.classList.remove('open');
             self.active = false;
         },
-        checkMensions:(string)=>{
+        checkMensions(string){
             self.mensions = [];
-            diviDesignNotesAPI.data.users.forEach(user=>{
+            let stringMensions = string;
+            window[Symbol.for('diviDesignNotesAPI')].data.users.forEach(user=>{
                 if(string.includes(`@${user.display_name}`)){
+                    stringMensions = stringMensions.replace(`@${user.display_name}`,`<span>@${user.display_name}</span>`);
                     if(!self.mensions.indexOf(user.user_email)+1){
-                        self.mensions.push(user.user_email)
+                        self.mensions.push(user.user_email);
                     }
                 }
             })
-            return self.mensions;
+            return stringMensions;
         },
         setPosition: ()=>{
             if(!self.active) return;
@@ -43,37 +45,40 @@ export default function shadowDropDown(marker, element){
             const fromLeft = rects.x < 175 ? 1 : 0;
             const fromRight = ((innerWidth - rects.right) < 175) ? 3 : 0;
             const fromBottom = ((innerHeight - rects.bottom) < 200) ? 5 : 0;
-            let translate = '(-50%, 0, 0)';
+            let translate = '';
 
             if(fromBottom || fromRight || fromLeft){
                 switch(fromBottom + fromLeft + fromRight) {
                     case 1: //Left
-                        translate = `(-${rects.x}px,0,0)`
+                    case 4: //Left & Right
+                        translate = `translateX(-${rects.x}px)`
                         break;
                     case 3: //Right
-                        translate = `(-${350-(innerWidth - rects.right)}px,0,0)`
-                        break;
-                    case 4: //Left & Right
-                        translate = `(0,0,0)`
+                        translate = `translateX(-${350-(innerWidth - rects.right)}px)`
                         break;
                     case 5: //Bottom
-                        translate = `(-50%,-100%,0) translateY(-30px)`
+                        translate = `translate(-50%,-100%) translate(15px,-40px)`
                         break;
                     case 6: //Left & Bottom
-                        translate = `(-${rects.x}px,-100%,0) translateY(-30px)`
+                        translate = `translate(-${rects.x}px,-100%) translateY(-40px)`
                         break;
                     case 8: //Right & Bottom
-                        translate = `(-${350-(innerWidth - rects.right)}px,-100%,0) translateY(-30px)`
+                        translate = `translate(-${350-(innerWidth - rects.right)}px,-100%) translateY(-40px)`
                         break;
                     case 9: //Left & Right & Bottom
-                        translate = `(0,-100%,0) translateY(-30px)`
+                        translate = `translate(0,-100%) translateY(-40px)`
                         break;
                     }
             }
             
             self.element.style.top = `${rects.bottom}px`;
             self.element.style.left = `${rects.x}px`;
-            self.element.style.transform = `translate3d${translate}`;
+            self.element.style.transform = translate;
+            if(!fromBottom){
+                self.element.style.maxHeight = `${innerHeight - rects.bottom}px`;
+            }else{
+                self.element.style.maxHeight = '';
+            }
         },
         clear(){
             self.textArea.value = '';
@@ -98,22 +103,25 @@ export default function shadowDropDown(marker, element){
                 return;
             }
             const data = new FormData();
-            if(self.checkMensions(self.textArea.value)){
+            const content = self.checkMensions(self.textArea.value);
+            if(self.mensions.length){
                 data.append('mensions', self.mensions.join(','))
             }
             data.append('type', 'create')
             data.append('x',self.marker.position.x)
             data.append('y',self.marker.position.y)
             data.append('el', self.marker.getElSelector())
-            data.append('content', self.textArea.value.trim())
-            data.append('post_id', diviDesignNotesAPI.data.post_id)
-            diviDesignNotesAPI.ajax(data)
+            data.append('content', content.trim())
+            data.append('post_id', window[Symbol.for('diviDesignNotesAPI')].data.post_id)
+            data.append('href', window[Symbol.for('diviDesignNotesAPI')].data.href)
+            data.append('title', window[Symbol.for('diviDesignNotesAPI')].data.title)
+            window[Symbol.for('diviDesignNotesAPI')].ajax(data)
             .then(res=>{if(res.ok)return res.json()})
             .then(obj => {
                 if(obj.success){
                     self.clear();
                     self.marker.reset();
-                    diviDesignNotesAPI.createNote(obj.html)
+                    window[Symbol.for('diviDesignNotesAPI')].createNote(obj.html)
                 }
                 self.ajaxing(false);
             })

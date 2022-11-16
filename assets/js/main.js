@@ -58,7 +58,7 @@ function $04cb2e1132857924$export$2e2bcd8739ae039(marker, element) {
             else self.open();
         },
         open () {
-            diviDesignNotesAPI.closeDropdowns();
+            window[Symbol.for("diviDesignNotesAPI")].closeDropdowns();
             self.element.classList.add("open");
             self.active = true;
             self.setPosition();
@@ -67,14 +67,17 @@ function $04cb2e1132857924$export$2e2bcd8739ae039(marker, element) {
             self.element.classList.remove("open");
             self.active = false;
         },
-        checkMensions: function(string) {
+        checkMensions (string) {
             self.mensions = [];
-            diviDesignNotesAPI.data.users.forEach((user)=>{
+            let stringMensions = string;
+            window[Symbol.for("diviDesignNotesAPI")].data.users.forEach((user)=>{
                 if (string.includes(`@${user.display_name}`)) {
+                    stringMensions = stringMensions.replace(`@${user.display_name}`, `<span>@${user.display_name}</span>`);
                     if (!self.mensions.indexOf(user.user_email) + 1) self.mensions.push(user.user_email);
                 }
+                console.log(self.mensions);
             });
-            return self.mensions;
+            return stringMensions;
         },
         setPosition () {
             if (!self.active) return;
@@ -82,33 +85,33 @@ function $04cb2e1132857924$export$2e2bcd8739ae039(marker, element) {
             const fromLeft = rects.x < 175 ? 1 : 0;
             const fromRight = innerWidth - rects.right < 175 ? 3 : 0;
             const fromBottom = innerHeight - rects.bottom < 200 ? 5 : 0;
-            let translate = "(-50%, 0, 0)";
+            let translate = "";
             if (fromBottom || fromRight || fromLeft) switch(fromBottom + fromLeft + fromRight){
                 case 1:
-                    translate = `(-${rects.x}px,0,0)`;
+                case 4:
+                    translate = `translateX(-${rects.x}px)`;
                     break;
                 case 3:
-                    translate = `(-${350 - (innerWidth - rects.right)}px,0,0)`;
-                    break;
-                case 4:
-                    translate = `(0,0,0)`;
+                    translate = `translateX(-${350 - (innerWidth - rects.right)}px)`;
                     break;
                 case 5:
-                    translate = `(-50%,-100%,0) translateY(-30px)`;
+                    translate = `translate(-50%,-100%) translate(15px,-40px)`;
                     break;
                 case 6:
-                    translate = `(-${rects.x}px,-100%,0) translateY(-30px)`;
+                    translate = `translate(-${rects.x}px,-100%) translateY(-40px)`;
                     break;
                 case 8:
-                    translate = `(-${350 - (innerWidth - rects.right)}px,-100%,0) translateY(-30px)`;
+                    translate = `translate(-${350 - (innerWidth - rects.right)}px,-100%) translateY(-40px)`;
                     break;
                 case 9:
-                    translate = `(0,-100%,0) translateY(-30px)`;
+                    translate = `translate(0,-100%) translateY(-40px)`;
                     break;
             }
             self.element.style.top = `${rects.bottom}px`;
             self.element.style.left = `${rects.x}px`;
-            self.element.style.transform = `translate3d${translate}`;
+            self.element.style.transform = translate;
+            if (!fromBottom) self.element.style.maxHeight = `${innerHeight - rects.bottom}px`;
+            else self.element.style.maxHeight = "";
         },
         clicked (e) {
             if (!e.target.dataset.action || self.is_ajaxing) return;
@@ -136,7 +139,7 @@ function $04cb2e1132857924$export$2e2bcd8739ae039(marker, element) {
             const data = new FormData();
             data.append("type", "resolve");
             data.append("id", self.marker.id);
-            diviDesignNotesAPI.ajax(data).then((res)=>{
+            window[Symbol.for("diviDesignNotesAPI")].ajax(data).then((res)=>{
                 if (res.ok) return res.json();
             }).then((json)=>{
                 console.log(json);
@@ -154,15 +157,17 @@ function $04cb2e1132857924$export$2e2bcd8739ae039(marker, element) {
             }
             self.ajaxing(true);
             const data = new FormData();
-            if (self.checkMensions(self.textArea.value)) data.append("mensions", self.mensions.join(","));
+            const content = self.checkMensions(self.textArea.value);
+            if (self.mensions.length) data.append("mensions", self.mensions.join(","));
             data.append("type", "post");
             data.append("parent_id", self.marker.id);
-            data.append("content", self.textArea.value.trim());
-            data.append("post_id", diviDesignNotesAPI.data.post_id);
-            diviDesignNotesAPI.ajax(data).then((res)=>{
+            data.append("content", content.trim());
+            data.append("post_id", window[Symbol.for("diviDesignNotesAPI")].data.post_id);
+            data.append("href", window[Symbol.for("diviDesignNotesAPI")].data.href);
+            data.append("title", window[Symbol.for("diviDesignNotesAPI")].data.title);
+            window[Symbol.for("diviDesignNotesAPI")].ajax(data).then((res)=>{
                 if (res.ok) return res.json();
             }).then((obj)=>{
-                console.log(obj);
                 if (obj.success) {
                     const body = self.element.querySelector(".design_note_dropdown_body");
                     body.insertAdjacentHTML("beforeend", obj.html);
@@ -176,11 +181,11 @@ function $04cb2e1132857924$export$2e2bcd8739ae039(marker, element) {
             const data = new FormData();
             data.append("type", "delete");
             data.append("note_id", self.marker.id);
-            diviDesignNotesAPI.ajax(data).then((res)=>{
+            window[Symbol.for("diviDesignNotesAPI")].ajax(data).then((res)=>{
                 if (res.ok) return res.json();
             }).then((obj)=>{
                 console.log(obj);
-                if (obj.parent) diviDesignNotesAPI.delete(self.marker);
+                if (obj.parent) window[Symbol.for("diviDesignNotesAPI")].delete(self.marker);
             });
         },
         ajaxing (flag = null) {
@@ -277,7 +282,7 @@ function $446359f2ef3c174b$export$2e2bcd8739ae039(marker, element) {
             else self.open();
         },
         open: ()=>{
-            diviDesignNotesAPI.closeDropdowns();
+            window[Symbol.for("diviDesignNotesAPI")].closeDropdowns();
             self.element.classList.add("open");
             self.active = true;
             self.setPosition();
@@ -286,14 +291,16 @@ function $446359f2ef3c174b$export$2e2bcd8739ae039(marker, element) {
             self.element.classList.remove("open");
             self.active = false;
         },
-        checkMensions: (string)=>{
+        checkMensions (string) {
             self.mensions = [];
-            diviDesignNotesAPI.data.users.forEach((user)=>{
+            let stringMensions = string;
+            window[Symbol.for("diviDesignNotesAPI")].data.users.forEach((user)=>{
                 if (string.includes(`@${user.display_name}`)) {
+                    stringMensions = stringMensions.replace(`@${user.display_name}`, `<span>@${user.display_name}</span>`);
                     if (!self.mensions.indexOf(user.user_email) + 1) self.mensions.push(user.user_email);
                 }
             });
-            return self.mensions;
+            return stringMensions;
         },
         setPosition: ()=>{
             if (!self.active) return;
@@ -301,33 +308,33 @@ function $446359f2ef3c174b$export$2e2bcd8739ae039(marker, element) {
             const fromLeft = rects.x < 175 ? 1 : 0;
             const fromRight = innerWidth - rects.right < 175 ? 3 : 0;
             const fromBottom = innerHeight - rects.bottom < 200 ? 5 : 0;
-            let translate = "(-50%, 0, 0)";
+            let translate = "";
             if (fromBottom || fromRight || fromLeft) switch(fromBottom + fromLeft + fromRight){
                 case 1:
-                    translate = `(-${rects.x}px,0,0)`;
+                case 4:
+                    translate = `translateX(-${rects.x}px)`;
                     break;
                 case 3:
-                    translate = `(-${350 - (innerWidth - rects.right)}px,0,0)`;
-                    break;
-                case 4:
-                    translate = `(0,0,0)`;
+                    translate = `translateX(-${350 - (innerWidth - rects.right)}px)`;
                     break;
                 case 5:
-                    translate = `(-50%,-100%,0) translateY(-30px)`;
+                    translate = `translate(-50%,-100%) translate(15px,-40px)`;
                     break;
                 case 6:
-                    translate = `(-${rects.x}px,-100%,0) translateY(-30px)`;
+                    translate = `translate(-${rects.x}px,-100%) translateY(-40px)`;
                     break;
                 case 8:
-                    translate = `(-${350 - (innerWidth - rects.right)}px,-100%,0) translateY(-30px)`;
+                    translate = `translate(-${350 - (innerWidth - rects.right)}px,-100%) translateY(-40px)`;
                     break;
                 case 9:
-                    translate = `(0,-100%,0) translateY(-30px)`;
+                    translate = `translate(0,-100%) translateY(-40px)`;
                     break;
             }
             self.element.style.top = `${rects.bottom}px`;
             self.element.style.left = `${rects.x}px`;
-            self.element.style.transform = `translate3d${translate}`;
+            self.element.style.transform = translate;
+            if (!fromBottom) self.element.style.maxHeight = `${innerHeight - rects.bottom}px`;
+            else self.element.style.maxHeight = "";
         },
         clear () {
             self.textArea.value = "";
@@ -352,20 +359,23 @@ function $446359f2ef3c174b$export$2e2bcd8739ae039(marker, element) {
                 return;
             }
             const data = new FormData();
-            if (self.checkMensions(self.textArea.value)) data.append("mensions", self.mensions.join(","));
+            const content = self.checkMensions(self.textArea.value);
+            if (self.mensions.length) data.append("mensions", self.mensions.join(","));
             data.append("type", "create");
             data.append("x", self.marker.position.x);
             data.append("y", self.marker.position.y);
             data.append("el", self.marker.getElSelector());
-            data.append("content", self.textArea.value.trim());
-            data.append("post_id", diviDesignNotesAPI.data.post_id);
-            diviDesignNotesAPI.ajax(data).then((res)=>{
+            data.append("content", content.trim());
+            data.append("post_id", window[Symbol.for("diviDesignNotesAPI")].data.post_id);
+            data.append("href", window[Symbol.for("diviDesignNotesAPI")].data.href);
+            data.append("title", window[Symbol.for("diviDesignNotesAPI")].data.title);
+            window[Symbol.for("diviDesignNotesAPI")].ajax(data).then((res)=>{
                 if (res.ok) return res.json();
             }).then((obj)=>{
                 if (obj.success) {
                     self.clear();
                     self.marker.reset();
-                    diviDesignNotesAPI.createNote(obj.html);
+                    window[Symbol.for("diviDesignNotesAPI")].createNote(obj.html);
                 }
                 self.ajaxing(false);
             });
@@ -466,6 +476,60 @@ function $6dc5cde899f2ffd0$export$2e2bcd8739ae039(element) {
 }
 
 
+
+function $721cdff4d51d86e7$export$2e2bcd8739ae039(pageContainer) {
+    const self = {
+        pageContainer: pageContainer,
+        element: (0, $20b4a97a61b3fccb$export$2e6c959c16ff56b8)("#divi_design_notes_menu"),
+        moveButton: null,
+        toggleButton: null,
+        move (e) {
+            // const x = self.element.style.left || 100;
+            // const y = self.element.style.top || 100;
+            self.element.style.transform = `translate3d(${e.clientX}px,${e.clientY}px,0)`;
+        // self.element.style.left = `${parseInt(x)+e.movementX}px`;
+        // self.element.style.top = `${parseInt(y)+e.movementY}px`;
+        },
+        stopMove (e) {
+            console.log(e.type, e.currentTarget);
+            (0, $20b4a97a61b3fccb$export$8c8705df4a2dcec9)("mousemove", self.move);
+            (0, $20b4a97a61b3fccb$export$8c8705df4a2dcec9)("mouseup", self.stopMove);
+            (0, $20b4a97a61b3fccb$export$8c8705df4a2dcec9)("mouseleave", self.stopMove, self.element);
+            if (e.type === "mouseleave") self.element.style.transform = "";
+        },
+        clicked (e) {
+            if (!e.target.dataset.action) return;
+            const action = e.target.dataset.action;
+            console.log(action);
+            if (action === "toggle") self.element.classList.toggle("open");
+            if (action === "new") window[Symbol.for("diviDesignNotesAPI")].buttonClicked(e);
+        },
+        input (e) {
+            if (e.target.id === "resolved_notes") {
+                if (e.target.checked) document.body.classList.remove("hide-resolved");
+                else document.body.classList.add("hide-resolved");
+            }
+            if (e.target.id === "active_notes") {
+                if (e.target.checked) document.body.classList.remove("hide-active");
+                else document.body.classList.add("hide-active");
+            }
+        },
+        init () {
+            self.moveButton = (0, $20b4a97a61b3fccb$export$2e6c959c16ff56b8)('span[data-action="move"]');
+            self.addButton = (0, $20b4a97a61b3fccb$export$2e6c959c16ff56b8)('span[data-action="toggle"]');
+            (0, $20b4a97a61b3fccb$export$af631764ddc44097)("mousedown", ()=>{
+                (0, $20b4a97a61b3fccb$export$af631764ddc44097)("mousemove", self.move);
+                (0, $20b4a97a61b3fccb$export$af631764ddc44097)("mouseup", self.stopMove);
+                (0, $20b4a97a61b3fccb$export$af631764ddc44097)("mouseleave", self.stopMove, self.element);
+            }, self.moveButton);
+            (0, $20b4a97a61b3fccb$export$af631764ddc44097)("click", self.clicked, self.element);
+            (0, $20b4a97a61b3fccb$export$af631764ddc44097)("input", self.input, self.element);
+        }
+    };
+    return self;
+}
+
+
 function $b43c1ccb12885cba$export$2e2bcd8739ae039(button, dataElement) {
     const self = {
         button: (0, $20b4a97a61b3fccb$export$2e6c959c16ff56b8)("#wp-admin-bar-design_notes"),
@@ -473,6 +537,7 @@ function $b43c1ccb12885cba$export$2e2bcd8739ae039(button, dataElement) {
         templatesContainer: (0, $20b4a97a61b3fccb$export$2e6c959c16ff56b8)("#design_notes_template"),
         data: JSON.parse((0, $20b4a97a61b3fccb$export$2e6c959c16ff56b8)("#divi_design_notes_json").textContent),
         notes: [],
+        menu: null,
         hoveredElement: false,
         user: "",
         markerActive: false,
@@ -598,6 +663,11 @@ function $b43c1ccb12885cba$export$2e2bcd8739ae039(button, dataElement) {
             self.notes.splice(self.notes.indexOf($marker), 1);
         },
         init () {
+            if (self.markerActive) self.stopMarker();
+            if (self.menu) return;
+            //Menu
+            self.menu = (0, $721cdff4d51d86e7$export$2e2bcd8739ae039)(self.pageContainer);
+            self.menu.init();
             //Users related
             self.usersNode.id = "design_notes_user_list";
             self.data.users.forEach((item)=>{
@@ -617,7 +687,7 @@ function $b43c1ccb12885cba$export$2e2bcd8739ae039(button, dataElement) {
             const elem = (0, $20b4a97a61b3fccb$export$2e6c959c16ff56b8)("#shadowmarker", self.templatesContainer);
             self.shadowMarker = (0, $6dc5cde899f2ffd0$export$2e2bcd8739ae039)(elem).init();
             (0, $20b4a97a61b3fccb$export$af631764ddc44097)("click", self.chooseUser, self.usersNode);
-            (0, $20b4a97a61b3fccb$export$af631764ddc44097)("click", self.buttonClicked, self.button);
+            //on('click', self.buttonClicked, self.button);
             (0, $20b4a97a61b3fccb$export$af631764ddc44097)("scroll", self.maybeSetTimeout);
             (0, $20b4a97a61b3fccb$export$af631764ddc44097)("resize", self.maybeSetTimeout, window);
             (0, $20b4a97a61b3fccb$export$af631764ddc44097)("input", self.inputHandler);
@@ -711,8 +781,12 @@ function $040bacab4c74f57c$export$2e2bcd8739ae039(relatedElement, coor) {
 
 
 window.addEventListener("load", function() {
-    window.diviDesignNotesAPI = (0, $b43c1ccb12885cba$export$2e2bcd8739ae039)();
-    window.diviDesignNotesAPI.init();
+    const button = (0, $20b4a97a61b3fccb$export$2e6c959c16ff56b8)("#wp-admin-bar-design_notes");
+    (0, $20b4a97a61b3fccb$export$af631764ddc44097)("click", function() {
+        document.body.classList.toggle("show_design_notes");
+        window[Symbol.for("diviDesignNotesAPI")].init();
+    }, button);
+    window[Symbol.for("diviDesignNotesAPI")] = (0, $b43c1ccb12885cba$export$2e2bcd8739ae039)();
 });
 
 

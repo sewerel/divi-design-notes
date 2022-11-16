@@ -1,0 +1,40 @@
+<mjml>
+  <mj-body>
+
+    <mj-section background-color="#f0f0f0">
+        <mj-column>
+            <mj-text  align="center"
+                    font-size="16px"
+                    color="#000">
+            %%NAME%%
+            </mj-text>
+            <mj-text  align="center"
+                    font-size="16px"
+                    color="#000">
+            %%TEXT%% at %%PAGE%%
+            </mj-text>
+        </mj-column>
+    </mj-section>
+    <mj-section background-color="#f0f0f0">
+        <mj-column>
+            <mj-text  align="center"
+                    font-size="16px"
+                    color="#626262">
+            %%CONTENT%%
+            </mj-text>
+        </mj-column>
+    </mj-section>
+    <mj-section background-color="#f0f0f0">
+        <mj-column>
+            <mj-button href="%%HREF%%"  align="center"
+                    font-size="16px"
+                    background-color="#29c4a9"
+                    color="#fff">
+            Take me there
+            </mj-button>
+        </mj-column>
+    </mj-section>
+
+
+  </mj-body>
+</mjml>
