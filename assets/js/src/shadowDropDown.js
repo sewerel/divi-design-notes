@@ -140,7 +140,7 @@ export default function shadowDropDown(marker, element){
                 self.is_ajaxing = false;
             }
         },
-        init: ()=>{
+        init(){
             self.textArea = self.element.querySelector('textarea');
             document.body.appendChild(self.element);
             on('click', self.clicked, self.element);

@@ -37,12 +37,14 @@ export default function DesignNotesMain(button, dataElement){
             self.shadowMarker.activate(self.pageContainer);
             on('mousemove', self.followMarker, self.pageContainer );
             self.markerActive = true;
+            document.body.classList.add('marker-active');
             on('click', self.markerClicked, self.pageContainer);
         },
         stopMarker() {
             off('mousemove', self.followMarker, self.pageContainer );
             self.shadowMarker.element.remove();
             self.markerActive = false;
+            document.body.classList.remove('marker-active');
             off('click', self.markerClicked, self.pageContainer);
             if(self.hoveredElement) self.hoveredElement.style.outline = '';
 
@@ -77,6 +79,7 @@ export default function DesignNotesMain(button, dataElement){
             }
             self.shadowMarker.pinOnPage(self.hoveredElement,position);
             self.markerActive = false;
+            document.body.classList.remove('marker-active');
             if(self.hoveredElement) self.hoveredElement.style.outline = '';
         },
         createNote(html){

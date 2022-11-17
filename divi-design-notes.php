@@ -14,71 +14,67 @@ class Divi_Design_Notes
     public $comment_type = 'divi_design_note';
     public $current_user = 0;
     public $user_can_notes = false;
+    public $user_is_admin = false;
     public $post = '';
     public $post_id = 0;
     public $permalink = '';
     public $users_can_notes = 0;
     public $notes = null;
-    public $nonce = 'someString';
-    public $plugin_dir = null;
-    public $debug = 'debug';
+    public $nonce = '';
+    public $plugin_url = null;
+    public $debug = '';
 
     function __construct(){
-        $this->plugin_dir = plugin_dir_url( __FILE__ );
-        $this->current_user = wp_get_current_user();
-        $this->user_can_notes = $this->can_notes();
-        if($this->user_can_notes){
-            show_admin_bar(true);
-        }
-        $this->users_can_notes = get_option('diviDesignNotesUsersCan',false);
-        if(!$this->users_can_notes){
+        global $wpdb;
 
-            $this->users_can_notes = get_users([
-                'fields' => ['ID', 'display_name', 'user_email'],
-                'meta_query' => [
-                    'relation' => 'OR',
-                    [
-                        'key' => 'wp_capabilities',
-                        'value' => 'administrator',
-                        'compare' => 'LIKE'
-                    ],
-                    [
-                        'key' => 'divi_design_notes',
-                        'value' => '1',
-                        'compare' => '='
-                    ]
-                ]
-            ]);
-            update_option('diviDesignNotesUsersCan', $this->users_can_notes, true );
+        $this->plugin_url = plugin_dir_url( __FILE__ );
+        $this->current_user = wp_get_current_user();
+
+        if($this->current_user->ID){
+            $this->set_user_status();
         }
+        if($this->user_can_notes){
+           add_filter( 'show_admin_bar', '__return_true', 100, 0);
+           add_action('template_redirect', [$this, 'init']);
+        }
+        $this->set_users();
 
         add_action('wp_ajax_create_note', [$this, 'create_note']);
         add_action('wp_ajax_divi_design_notes_ajax', [$this, 'ajax_divi_design_notes']);
-        add_action('template_redirect', [$this, 'init']);
         add_action('edit_user_profile', [$this, 'custom_user_profile_fields'], 10, 1);
         add_action('edit_user_profile_update', [$this, 'user_meta_update']);
 
-        add_action( 'edit_user_created_user', [$this,'wipe_out_user_cache'],10,2);
-        add_action( 'profile_update', [$this, 'wipe_out_user_cache'],10 ,2);
-        add_action( 'deleted_user', [$this,'wipe_out_user_cache'],10,2);
+        
+        add_action( 'edit_user_created_user', [$this,'wipe_out_user_cache'],10,1);
+        add_action( 'profile_update', [$this, 'wipe_out_user_cache'],10 ,1);
+        add_action( 'deleted_user', [$this,'wipe_out_user_cache'],10,1);
+        
+        //For debuging purposes
+        add_action('wp_footer', function(){
+                echo '<h1>',$this->debug,'</h1>';
+        });
       
     }
-    function wipe_out_user_cache($user_id, $old_user_data){
+    function wipe_out_user_cache($user_id){
             delete_option('diviDesignNotesUsersCan');
     }
     function init(){
         $this->post = get_post();
-        $this->post_id = $this->post->ID;
-        $this->permalink = get_permalink($this->post); 
-        $this->notes = $this->get_notes();
-        $this->nonce = wp_create_nonce('diviDesignNotes');
+        if($this->post){
+            $this->post_id = $this->post->ID;
+            $this->permalink = get_permalink($this->post); 
+            $this->notes = $this->get_notes();
+            $this->nonce = wp_create_nonce('diviDesignNotes');
 
-        add_action('wp_enqueue_scripts', [$this, 'enqueue_scripts']);
+            add_action('wp_enqueue_scripts', [$this, 'enqueue_scripts']);
 
-        add_action('admin_bar_menu', [$this, 'admin_bar_item'], 100);
+            add_action('admin_bar_menu', [$this, 'admin_bar_item'], 100);
 
-        add_action('wp_footer', [$this, 'notes_create_html']);
-        add_action('wp_footer', [$this, 'display_notes']);
+            add_action('wp_footer', [$this, 'notes_create_html']);
+            add_action('wp_footer', [$this, 'display_notes']);
+        }
+
+        
     }
     public function ajax_divi_design_notes(){
         if (
@@ -192,8 +188,6 @@ class Divi_Design_Notes
                         $id,
                     )
                 );
-                //$children_deleted = $wpdb->delete($wpdb->comments, array('comment_parent' => $id));
-                //$parent_deleted = $wpdb->delete($wpdb->comments, array('comment_ID' => $id));
                 wp_send_json(['parent' => $parent_deleted, 'children' => $children_deleted]);
             }
             wp_send_json(['parent' => 0, 'children' => 0]);
@@ -218,22 +212,10 @@ class Divi_Design_Notes
         <?php }
     }
     public function user_meta_update($user_id){
-        if (!user_can($this->current_user, 'edit_user')) {
+        if (!$this->current_user->has_cap('edit_user')) {
             return;
         }
         update_user_meta($user_id, 'divi_design_notes', $_REQUEST['divi_design_notes']);
-    }
-    public function insert_note($args){
-        $params = array(
-            'comment_post_ID'   => $args['post_id'],
-            'comment_type'      => $this->comment_type,
-            'user_id'           => $this->current_user->ID,
-            'comment_author'    => $args['name'],
-            'comment_approved'  => 'note',
-            'comment_content'   => $args['content'],
-            'comment_parent'    => $args['parent_id'],
-        );
-        return wp_insert_comment($params);
     }
     public function send_mails($args){
         
@@ -264,27 +246,46 @@ class Divi_Design_Notes
 
     public function enqueue_scripts(){
         if ($this->user_can_notes) {
-            wp_enqueue_script('divi_design_notes_js', $this->plugin_dir . 'assets/js/main.js', ['jquery'], $this->version, true);
-            wp_enqueue_style('divi_design_notes_css', $this->plugin_dir . 'assets/css/style.css', [], $this->version);
+            wp_enqueue_script('divi_design_notes_js', $this->plugin_url . 'assets/js/main.js', ['jquery'], $this->version, true);
+            wp_enqueue_style('divi_design_notes_css', $this->plugin_url . 'assets/css/style.css', [], $this->version);
         }
     }
-    public function can_notes(){
-        if (
-            $this->current_user &&
-            (user_can($this->current_user, 'administrator') || '1' == get_the_author_meta('divi_design_notes', $this->current_user->ID))
-        ) {
-
-            return true;
+    public function set_users(){
+        $this->users_can_notes = get_option('diviDesignNotesUsersCan',false);
+        if(!$this->users_can_notes){
+            $this->users_can_notes = get_users([
+                'fields' => ['ID', 'display_name', 'user_email'],
+                'meta_query' => [
+                    'relation' => 'OR',
+                    [
+                        'key' => $wpdb->prefix.'capabilities',
+                        'value' => 'administrator',
+                        'compare' => 'LIKE'
+                    ],
+                    [
+                        'key' => 'divi_design_notes',
+                        'value' => '1',
+                        'compare' => '='
+                    ]
+                ]
+            ]);
+            update_option('diviDesignNotesUsersCan', $this->users_can_notes, true );
         }
-        return false;
+    }
+    public function set_user_status(){
+        if ( $this->current_user->has_cap('administrator') ){
+            $this->user_is_admin = true;
+            $this->user_can_notes = true;
+        }elseif('1' == get_user_meta($this->current_user->ID,'divi_design_notes',true )){
+            $this->user_can_notes = true;
+        }
     }
 
     public function admin_bar_item(WP_Admin_Bar $wp_admin_bar){
 
         if (is_admin() || !$this->user_can_notes) {
             return;
-        } // Display Menu only for wp-admin area
-
+        }
         $wp_admin_bar->add_menu(
             array(
                 'id'     => 'design_notes',
@@ -394,7 +395,7 @@ class Divi_Design_Notes
             <div class="design_notes_menu_body">
                 <p>
                     <span>Add new note</span>
-                    <span data-action="new">+</span>
+                    <span data-action="new"></span>
                 </p>
                 <p>
                     <span>Show active notes</span>
@@ -408,7 +409,6 @@ class Divi_Design_Notes
                 </p>
 
             </div>
-
         </div>
         </div>
     <?php echo ob_get_clean();
@@ -471,6 +471,18 @@ class Divi_Design_Notes
         </div>
         <?php return ob_get_clean();
     }
+    public function insert_note($args){
+        $params = array(
+            'comment_post_ID'   => $args['post_id'],
+            'comment_type'      => $this->comment_type,
+            'user_id'           => $this->current_user->ID,
+            'comment_author'    => $args['name'],
+            'comment_approved'  => 'note',
+            'comment_content'   => $args['content'],
+            'comment_parent'    => $args['parent_id'],
+        );
+        return wp_insert_comment($params);
+    }
     function notes_create_html(){
         $data = [
             'user' => [
@@ -495,7 +507,7 @@ class Divi_Design_Notes
 }
 add_action('init', function () {
     global $_REQUEST;
-    if (isset($_REQUEST['et_fb'])) {
+    if ( isset($_REQUEST['et_fb']) || ( 'Divi' !== get_option('template') ) ) {
         return;
     }
     new Divi_Design_Notes();
