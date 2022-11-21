@@ -268,8 +268,8 @@ body .design_note_dropdown.open{
     position: fixed;
     transition: max-height .3s ease;
     max-height: 600px;
-    top: -19.5px;
-    left: -166.5px;
+    top: -22px;
+    left: -162px;
     transform: translate3d(266px,119px,0);
     background: #fff;
     border-radius: 7px;
