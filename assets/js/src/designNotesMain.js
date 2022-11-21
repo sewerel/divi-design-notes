@@ -95,7 +95,6 @@ export default function DesignNotesMain(button, dataElement){
                 const match = textToCaret.match(/@(?<text>[a-z]{0,3})$/i);
                 if(match){
                     self.currenMatch = match;
-                    console.log(match)
                     input.parentElement.appendChild(self.usersNode);
                     if(match.groups.text){
                         const usersMatched = self.data.users.filter(user => user.display_name.toLowerCase().includes(match.groups.text.toLowerCase()))
