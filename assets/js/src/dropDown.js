@@ -37,7 +37,6 @@ export default function DropDown(marker, element){
                         self.mensions.push(user.user_email);
                     }
                 }
-                console.log(self.mensions)
             })
             return stringMensions;
         },
@@ -111,7 +110,6 @@ export default function DropDown(marker, element){
             window[Symbol.for('diviDesignNotesAPI')].ajax(data)
             .then(res=>{if(res.ok)return res.json()})
             .then(json => {
-                console.log(json)
                 self.marker.element.classList.add('resolved')
                 self.element.classList.add('resolved')
                 self.ajaxing(false);
@@ -145,7 +143,7 @@ export default function DropDown(marker, element){
                     self.textArea.value = '';
                 }
                 self.ajaxing(false);
-            })
+            }).catch(err =>{self.ajaxing(false)});
         },
         delete(){
             self.ajaxing(true);
@@ -155,11 +153,12 @@ export default function DropDown(marker, element){
             window[Symbol.for('diviDesignNotesAPI')].ajax(data)
             .then(res=>{if(res.ok)return res.json()})
             .then(obj => {
-                console.log(obj)
                 if(obj.parent){
                     window[Symbol.for('diviDesignNotesAPI')].delete(self.marker);
+                }else{
+                    self.ajaxing(false)
                 }
-            })
+            }).catch(err =>{self.ajaxing(false)});
         },
         ajaxing(flag = null){
             if(flag === null){

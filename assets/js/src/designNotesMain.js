@@ -92,10 +92,17 @@ export default function DesignNotesMain(button, dataElement){
             if(e.target.matches('.design_note_textarea')){
                 const input = self.inputTarget = e.target;
                 const textToCaret = input.value.substring(0, input.selectionStart);
-                const match = textToCaret.match(/@[a-z]{0,3}$/i);
+                const match = textToCaret.match(/@(?<text>[a-z]{0,3})$/i);
                 if(match){
                     self.currenMatch = match;
+                    console.log(match)
                     input.parentElement.appendChild(self.usersNode);
+                    if(match.groups.text){
+                        const usersMatched = self.data.users.filter(user => user.display_name.toLowerCase().includes(match.groups.text.toLowerCase()))
+                        self.usersNode.innerHTML = self.usersListItems(usersMatched)
+                    }else{
+                        self.usersNode.innerHTML = self.usersListItems(self.data.users)
+                    }
                 }else{
                     self.usersNode.remove();
                 }
@@ -110,7 +117,7 @@ export default function DesignNotesMain(button, dataElement){
         chooseUser(e) {
             const user = e.target;
             const input = self.inputTarget;
-            const rejex = new RegExp(`${self.currenMatch}$`,'g');
+            const rejex = new RegExp(`${self.currenMatch[0]}$`,'g');
             input.value = input.value.replace(rejex, `@${user.dataset.userName} `);
             input.focus();
             input.setSelectionRange(input.value.length + 1, input.value.length + 1);
@@ -153,6 +160,11 @@ export default function DesignNotesMain(button, dataElement){
             $marker.element.remove();
             self.notes.splice(self.notes.indexOf($marker),1);
         },
+        usersListItems(list){
+            return html = list.map(user => {
+                return `<li data-user-name="${user.display_name}">${user.display_name}<span>${user.user_email}</span></li>`;
+            }).join('');
+        },
         init(){
             if( self.markerActive ){
                 self.stopMarker()
@@ -163,13 +175,14 @@ export default function DesignNotesMain(button, dataElement){
             self.menu.init();
             //Users related
             self.usersNode.id = 'design_notes_user_list';
-            self.data.users.forEach(item =>{
-                const li = document.createElement('li');
-                li.dataset.userId = item.id;
-                li.dataset.userName = item.display_name;
-                li.textContent = item.display_name;
-                self.usersNode.appendChild(li);
-            });
+            self.usersNode.innerHTML = self.usersListItems(self.data.users)
+            // self.data.users.forEach(item =>{
+            //     const li = document.createElement('li');
+            //     li.dataset.userId = item.id;
+            //     li.dataset.userName = item.display_name;
+            //     li.textContent = item.display_name;
+            //     self.usersNode.appendChild(li);
+            // });
             //Set Markers
             const selectedMarkers = select('[id^=notemarker]', self.templatesContainer, true);
             selectedMarkers.forEach(node => {
@@ -186,8 +199,6 @@ export default function DesignNotesMain(button, dataElement){
             on('resize', self.maybeSetTimeout, window);
             on('input', self.inputHandler);
             on('transitionend', self.maybeSetTimeout, self.pageContainer);
-
-        
 
         },
         

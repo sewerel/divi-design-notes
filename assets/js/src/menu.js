@@ -16,7 +16,6 @@ export default function Menu(pageContainer){
             // self.element.style.top = `${parseInt(y)+e.movementY}px`;
         },
         stopMove(e){
-            console.log(e.type,e.currentTarget)
             off('mousemove', self.move);
             off('mouseup', self.stopMove);
             off('mouseleave',self.stopMove,self.element);
@@ -27,7 +26,6 @@ export default function Menu(pageContainer){
         clicked(e){
             if(!e.target.dataset.action){return}
             const action = e.target.dataset.action;
-            console.log(action)
             if(action === 'toggle'){
                 self.element.classList.toggle('open')
             }

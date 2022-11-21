@@ -124,7 +124,7 @@ export default function shadowDropDown(marker, element){
                     window[Symbol.for('diviDesignNotesAPI')].createNote(obj.html)
                 }
                 self.ajaxing(false);
-            })
+            }).catch(err =>{self.ajaxing(false)});
             
         },
         ajaxing(flag = null){

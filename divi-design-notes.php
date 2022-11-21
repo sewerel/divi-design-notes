@@ -1,10 +1,10 @@
 <?php
 /*
 Plugin Name: Divi Design Notes
-Plugin URI: https://milen.pro
+Plugin URI: https://divi-design-notes.powdithemes.com
 Version: 1.0.0
 Author: Powdistudio LTD
-Author URI: https://milen.pro
+Author URI: https://powdisudio.com
 */
 
 class Divi_Design_Notes
@@ -22,10 +22,8 @@ class Divi_Design_Notes
     public $notes = null;
     public $nonce = '';
     public $plugin_url = null;
-    public $debug = '';
 
     function __construct(){
-        global $wpdb;
 
         $this->plugin_url = plugin_dir_url( __FILE__ );
         $this->current_user = wp_get_current_user();
@@ -39,7 +37,7 @@ class Divi_Design_Notes
         }
         $this->set_users();
 
-        add_action('wp_ajax_create_note', [$this, 'create_note']);
+        //add_action('wp_ajax_create_note', [$this, 'create_note']);
         add_action('wp_ajax_divi_design_notes_ajax', [$this, 'ajax_divi_design_notes']);
         add_action('edit_user_profile', [$this, 'custom_user_profile_fields'], 10, 1);
         add_action('edit_user_profile_update', [$this, 'user_meta_update']);
@@ -49,10 +47,6 @@ class Divi_Design_Notes
         add_action( 'profile_update', [$this, 'wipe_out_user_cache'],10 ,1);
         add_action( 'deleted_user', [$this,'wipe_out_user_cache'],10,1);
         
-        //For debuging purposes
-        add_action('wp_footer', function(){
-                echo '<h1>',$this->debug,'</h1>';
-        });
       
     }
     function wipe_out_user_cache($user_id){
@@ -117,8 +111,7 @@ class Divi_Design_Notes
                 $args['content'] = stripslashes($_REQUEST['content']);
                 $args['parent_id'] = !empty($_REQUEST['parent_id']) ? (int)$_REQUEST['parent_id'] : 0;
                 $args['mensions'] = !empty($_REQUEST['mensions']) ? explode(',',$_REQUEST['mensions']) : false;
-                //$args['mensions'] = !empty($_REQUEST['mensions']) ? $_REQUEST['mensions'] : false;
-                $args['name'] = $this->current_user->user_nicename;
+                $args['name'] = $this->current_user->display_name;
 
                 $new_note = $this->insert_note($args);
                 $output = '';
@@ -150,7 +143,7 @@ class Divi_Design_Notes
                 $args['parent_id'] = 0;
                 $args['mensions'] = !empty($_REQUEST['mensions']) ? json_decode( $_REQUEST['mensions'] ) : 0;
                 $args['content'] = maybe_serialize($content);
-                $args['name'] = $this->current_user->user_nicename;
+                $args['name'] = $this->current_user->display_name;
 
                 
                 $new_note = $this->insert_note($args);
@@ -220,6 +213,7 @@ class Divi_Design_Notes
     public function send_mails($args){
         
         $admin_email = get_option('admin_mail');
+        $blog_name = get_option( 'blogname' );
         ob_start();
         include(plugin_dir_path( __FILE__ ).'assets/mail/mail.php');
         $template = ob_get_clean();
@@ -227,8 +221,8 @@ class Divi_Design_Notes
         if($args['mensions'] && is_array($args['mensions'])){
 
                 $to = $args['mensions'];
-                $subject = 'You\'ve been mentioned note';
-                $body = str_replace(['%%NAME%%','%%TEXT%%','%%TITLE%%','%%CONTENT%%','%%HREF%%'],[ $args['name'], 'mentioned you on', $args['title'], $args['content'], $args['href']],$template);
+                $subject = 'You\'ve been mentioned in a note';
+                $body = str_replace(['%%NAME%%','%%TEXT%%','%%TITLE%%','%%BLOGNAME%%','%%CONTENT%%','%%HREF%%'],[ $args['name'], 'mentioned you on', $args['title'], $blog_name, $args['content'], $args['href']],$template);
                 $headers = array('Content-Type: text/html; charset=UTF-8');
 
             wp_mail( $to, $subject, $body, $headers );
@@ -236,7 +230,7 @@ class Divi_Design_Notes
 
         $to = $admin_mail;
         $subject = 'New note';
-        $body = str_replace(['%%NAME%%','%%TEXT%%','%%TITLE%%','%%CONTENT%%','%%HREF%%'],[ $args['name'], 'posted a note on', $args['title'], $args['content'], $args['href']], $template);
+        $body = str_replace(['%%NAME%%','%%TEXT%%','%%TITLE%%','%%BLOGNAME%%','%%CONTENT%%','%%HREF%%'],[ $args['name'], 'posted a note on', $args['title'], $blog_name, $args['content'], $args['href']], $template);
         $headers = array('Content-Type: text/html; charset=UTF-8');
 
         wp_mail( $to, $subject, $body, $headers );
@@ -247,10 +241,11 @@ class Divi_Design_Notes
     public function enqueue_scripts(){
         if ($this->user_can_notes) {
             wp_enqueue_script('divi_design_notes_js', $this->plugin_url . 'assets/js/main.js', ['jquery'], $this->version, true);
-            wp_enqueue_style('divi_design_notes_css', $this->plugin_url . 'assets/css/style.css', [], $this->version);
+            wp_enqueue_style('divi_design_notes_css', $this->plugin_url . 'assets/css/style.min.css', [], $this->version);
         }
     }
     public function set_users(){
+        global $wpdb;
         $this->users_can_notes = get_option('diviDesignNotesUsersCan',false);
         if(!$this->users_can_notes){
             $this->users_can_notes = get_users([
@@ -336,8 +331,9 @@ class Divi_Design_Notes
                     <span class="author">Note:</span>
                     <?php if (!$res) { ?>
                         <span data-action="resolve" class="button" title="Mark Resolved"></span>
+                    <?php } if ($this->user_is_admin) { ?>    
+                        <span data-action="delete" class="button" title="Delete note"></span>
                     <?php } ?>
-                    <span data-action="delete" class="button" title="Delete note"></span>
                 </div>
                 <div class="design_note_dropdown_body">
                     <div class="design_note_dropdown_note">
@@ -360,7 +356,7 @@ class Divi_Design_Notes
                 </div>
                 <div class="design_note_dropdown_footer">
                     <?php if(!$res){ ?>
-                    <button data-action="post" class="post">Post note</button>
+                    <button data-action="post" class="post-note">Post note</button>
                     <?php } ?>
                     <button data-action="cancel" class="cancel">Close</button>
                 </div>
@@ -380,7 +376,7 @@ class Divi_Design_Notes
                 <textarea class="design_note_textarea" placeholder="Type your reply. Use @ to mension" id=""></textarea>
             </div>
             <div class="design_note_dropdown_footer">
-                <button data-action="create" class="post">Post note</button>
+                <button data-action="create" class="post-note">Post note</button>
                 <button data-action="cancel" class="cancel">Close</button>
             </div>
         </div>
@@ -434,8 +430,9 @@ class Divi_Design_Notes
                 <span class="author">Note:</span>
                 <?php if (!$res) { ?>
                     <span data-action="resolve" class="button" title="Mark Resolved"></span>
+                <?php } if ($this->user_is_admin) { ?>    
+                        <span data-action="delete" class="button" title="Delete note"></span>
                 <?php } ?>
-                <span data-action="delete" class="button" title="Delete note"></span>
             </div>
             <div class="design_note_dropdown_body">
                 <div class="design_note_dropdown_note">
@@ -452,7 +449,7 @@ class Divi_Design_Notes
                 <textarea class="design_note_textarea" placeholder="Type your reply. Use @ to mension" id=""></textarea>
             </div>
             <div class="design_note_dropdown_footer">
-                <button data-action="post" class="post">Post note</button>
+                <button data-action="post" class="post-note">Post note</button>
                 <button data-action="cancel" class="cancel">Close</button>
             </div>
         </div>
@@ -487,7 +484,7 @@ class Divi_Design_Notes
         $data = [
             'user' => [
                 'ID' => $this->current_user->ID,
-                'display_name' => $this->current_user->user_nicename
+                'display_name' => $this->current_user->display_name
             ],
             'users'     => $this->users_can_notes,
             'post_id'   => $this->post->ID,

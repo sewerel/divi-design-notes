@@ -21,7 +21,7 @@ export default function Marker( element ){
             self.element.style.position = 'absolute';
             self.element.style.top = `${(self.position.y/self.relatedElement.offsetHeight)*100}%`;
             self.element.style.left = `${(self.position.x/self.relatedElement.offsetWidth)*100}%`;
-            self.element.style.transform = `translate(-15px,-30px)`;
+            self.element.style.transform = `translate(-20px,-40px)`;
         },
         setFixPosition: function(){
             const rects = self.relatedElement.getBoundingClientRect();

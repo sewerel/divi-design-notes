@@ -20,19 +20,19 @@ body .design_note_marker{
     height: 40px;
     position:fixed;
     pointer-events:all;
-    color: #29c4a9;
+    color: #589adf;
     font-size:20px;
     background-color: transparent;
     cursor: pointer;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
 }
 body .design_note_marker.resolved{
-    color: #ffd8a4;
+    color: #29c4a9;
 }
 body .design_note_marker.active{
     pointer-events:none;
     position:fixed;
-    color:rgb(19, 197, 19);
+    color:#5e24ac;
 }
 
 .design_note_dropdown{
@@ -49,9 +49,10 @@ body .design_note_marker.active{
     transition: opacity .3s;
     background: #fff;
     border-radius: 7px;
-    box-shadow: 0 0 18px 0 rgba(0,0,0,0.3);
+    box-shadow: 0 0 18px 0 rgb(0 0 0 / 30%);
     overflow-y: hidden;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    line-height: 1.4em;
 }
 .design_note_dropdown.resolved [data-action=post],
 .design_note_dropdown.resolved [data-action=resolve],
@@ -62,28 +63,51 @@ body .design_note_marker.active{
     display: inline-block;
     width: 100%;
     min-height: 3em;
-    background-color: #f1f1f1;
+    background-color: #f1f5f9;
     padding:10px;
     height: 30px;
+    resize: vertical;
+    border: none;
+    border-radius: 4px;
 }
 
 #design_notes_user_list{
     position:absolute;
     top:100%;
-    left:0;
-    width: 100%;
+    width: 80%;
+    left: 10%;
     list-style-type: none;
     margin: 0;
     padding: 0;
     border-radius: 5px;
+    box-shadow: 0 0 18px 0 rgb(0 0 0 / 30%);
     background:#fff;
+    color:#32373c;
 }
 #design_notes_user_list li{
-    padding:10px;
+    padding: 6px 14px;
     margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+}
+#design_notes_user_list li:first-child {
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    padding-top:12px;
+}
+#design_notes_user_list li:last-child {
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+    padding-bottom:12px;
+}
+#design_notes_user_list li>span{
+    font-weight: 400;
+    font-size: 12px;
+    pointer-events: none;
+    display:block;
 }
 #design_notes_user_list li:hover{
-    background-color: #f1f1f1;
+    background-color: #f1f5f9;
 }
 
 
@@ -105,24 +129,24 @@ body .design_note_dropdown.open{
     background-color: #5e24ac;
     color:#fff;
     border-radius: 5px 5px 0 0;
-    height: 50px;
+    height: 46px;
     padding: 10px;
 }
 .design_note_dropdown_header span{
     padding: 5px 8px;
     font-size: 18px;
-    font-weight: bold;
+    font-weight: 700;
     transition: all 0.3s;
 }
 .design_note_dropdown_header span.author{
     flex-grow: 1;
-    font-size: 19px;
+    font-size: 17px;
 }
 .design_note_dropdown_header span[data-action=delete],
 .design_note_dropdown_header span[data-action=resolve] {
     width:35px;
-    height:50px;
-    background-size:60%;
+    height:46px;
+    background-size:50%;
     background-repeat:no-repeat;
     background-position:center;
 }
@@ -146,31 +170,33 @@ body .design_note_dropdown.open{
 .design_note_dropdown_body{
     flex-grow:1;
     overflow-y: scroll;
-    color: #000;
+    color: #32373c;
     font-size: 15px;
-    padding: 20px 20px 0 20px;
+    padding: 13px 20px 0 20px;
     background: #fff;
-
+    font-weight: 400;
 }
 /* .design_note_dropdown_note{
 } */
 .design_note_dropdown_note_header{
     display: flex;
     flex-direction: row;
-    padding-bottom: 10px;
+    padding-bottom: 2px;
 }
 .design_note_dropdown_note_header span.author{
     flex-grow:1;
-    font-size:16px;
-    font-weight: bold;
+    font-size:14px;
+    font-weight: 700;
 }
 .design_note_dropdown_note_header span.time{
-    font-size:13px;
-    color:#a2b0c1;
+    font-size: 12px;
+    font-weight: 400;
+    color: #a2b0c1;
 }
 .design_note_dropdown_note_body{
-    font-size:15px;
-    padding-bottom: 20px;
+    font-size: 14px;
+    padding-bottom: 12px;
+    line-height: 1.3em;
 }
 .design_note_dropdown_note_body span{
     color:#589adf;
@@ -179,30 +205,26 @@ body .design_note_dropdown.open{
     position:relative;
     padding: 20px 20px 0 20px;
 }
-.design_note_textarea{
-    resize: vertical;
-    border:none;
-    border-radius: 4px;
-}
+
 .design_note_dropdown_footer{
     display:flex;
-    padding: 15px 20px 20px;
+    padding: 10px 20px 15px;
     justify-content: flex-end;
 }
 .design_note_dropdown_footer button{
     color: #fff;
-    text-transform: uppercase;
     border:none;
-    padding: 12px;
+    padding: 10px;
     border-radius: 4px;
     text-transform: uppercase;
-    font-size: 15px;
+    font-size: 13px;
+    font-weight: 500;
     width:50%;
 }
 .design_note_dropdown_footer button.cancel{
     background: #ef5555;
 }
-.design_note_dropdown_footer button.post{
+.design_note_dropdown_footer button.post-note{
     background: #29c4a9;
     margin-right: 20px;
 }
@@ -264,21 +286,25 @@ body .design_note_dropdown.open{
     color: #fff;
     border-radius: 5px 5px 0 0;
     justify-content: flex-end;
-    height: 40px;
-    padding: 10px;
+    height: 46px;
+    padding: 15px;
 }
 .design_notes_menu_header span.title {
     color:#fff;
     flex-grow: 1;
     font-size: 17px;
+    font-weight: 700;
 }
 .design_notes_menu_header span.button {
     width: 35px;
-    height: 40px;
-    background-size: 60%;
+    height: 46px;
+    background-size: 50%;
     background-repeat: no-repeat;
     background-position: center;
     transition: transform .3s ease;
+}
+.design_notes_menu_header span.button:hover {
+    background-color: rgba(0, 0, 0, 0.3);
 }
 .design_notes_menu_header span[data-action=move] {
     cursor: move;
@@ -292,10 +318,12 @@ body .design_note_dropdown.open{
     transition: transform .3s ease;
     transform-origin: top center;
     padding: 15px;
+    font-weight: 400;
+    color:#32373c;
 }
 
 #divi_design_notes_menu.open{
-    max-height: 40px;
+    max-height: 46px;
 }
 #divi_design_notes_menu.open span[data-action=toggle] {
     transform: rotateX(180deg);
@@ -304,7 +332,10 @@ body .design_note_dropdown.open{
     display:flex;
     justify-content: space-between;
     align-items: center;
-    padding-bottom: 7px;
+    padding-bottom: 10px;
+}
+.design_notes_menu_body p:first-child{
+    font-weight: 700;
 }
 #divi_design_notes_menu span[data-action=new] {
     height: 30px;
@@ -318,7 +349,7 @@ body .design_note_dropdown.open{
     background-size: 70%;
 }
 body.marker-active #divi_design_notes_menu span[data-action=new]{
-    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30px' height='30px' fill='%2329c4a9' viewBox='0 0 16 16'%3E%3Cpath d='M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z'%3E%3C/path%3E%3C/svg%3E") 15 30, pointer;
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30px' height='30px' fill='%235e24ac' viewBox='0 0 16 16'%3E%3Cpath d='M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z'%3E%3C/path%3E%3C/svg%3E") 15 30, pointer;
 }
 /* inputs */
 #divi_design_notes_menu input[type=checkbox] {

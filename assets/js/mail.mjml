@@ -5,13 +5,12 @@
         <mj-column>
             <mj-text  align="center"
                     font-size="16px"
-                    color="#000">
-            %%NAME%%
-            </mj-text>
-            <mj-text  align="center"
-                    font-size="16px"
-                    color="#000">
-            %%TEXT%% at %%PAGE%%
+                    color="#32373c"
+                     font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen-Sans, Ubuntu, Cantarell, Helvetica Neue, sans-serif;"
+                     line-height="1.3">
+            <b>%%NAME%%</b><br/>
+            %%TEXT%% on <b>"%%PAGE%%"</b><br/>
+            at <b>%%BLOGNAME%%</b>
             </mj-text>
         </mj-column>
     </mj-section>
@@ -19,7 +18,8 @@
         <mj-column>
             <mj-text  align="center"
                     font-size="16px"
-                    color="#626262">
+                    color="#32373c"
+                    font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen-Sans, Ubuntu, Cantarell, Helvetica Neue, sans-serif;">
             %%CONTENT%%
             </mj-text>
         </mj-column>
@@ -29,7 +29,8 @@
             <mj-button href="%%HREF%%"  align="center"
                     font-size="16px"
                     background-color="#29c4a9"
-                    color="#fff">
+                    color="#fff"
+                    font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen-Sans, Ubuntu, Cantarell, Helvetica Neue, sans-serif;">
             Take me there
             </mj-button>
         </mj-column>
