@@ -1,10 +1,12 @@
 <?php
 /*
-Plugin Name: Divi Design Notes
-Plugin URI: https://divi-design-notes.powdithemes.com
-Version: 1.0.0
-Author: Powdistudio LTD
-Author URI: https://powdisudio.com
+Plugin Name:        Divi Design Notes
+Plugin URI:         https://divi-design-notes.powdithemes.com
+Version:            1.0.0
+Author:             Powdistudio LTD
+Author URI:         https://powdisudio.com
+License:            GPL v2 or later
+License URI:        https://www.gnu.org/licenses/gpl-2.0.html
 */
 
 class Divi_Design_Notes
@@ -198,7 +200,7 @@ class Divi_Design_Notes
                 <tr style="background:#fff;font-weight:500;">
                     <td>
                         <input type="checkbox" name="divi_design_notes" id="divi_design_notes" value="1" <?php checked(get_the_author_meta('divi_design_notes', $profileuser->ID), 1); ?>" class="regular-text" />
-                        <label for="divi_design_notes"><?php esc_html_e('Allow Divi Design Notes'); ?></label>
+                        <label for="divi_design_notes"><?php echo esc_html('Allow Divi Design Notes'); ?></label>
                     </td>
                 </tr>
             </table>
@@ -212,26 +214,37 @@ class Divi_Design_Notes
     }
     public function send_mails($args){
         
-        $admin_email = get_option('admin_mail');
+        $admin_email = get_option('admin_email');
         $blog_name = get_option( 'blogname' );
         ob_start();
         include(plugin_dir_path( __FILE__ ).'assets/mail/mail.php');
         $template = ob_get_clean();
+        $sitename   = wp_parse_url( network_home_url(), PHP_URL_HOST );
+		$from_email = 'noreply@';
 
+		if ( null !== $sitename ) {
+			if ( 'www.' === substr( $sitename, 0, 4 ) ) {
+				$sitename = substr( $sitename, 4 );
+			}
+
+			$from_email .= $sitename;
+		}
+        $headers = array('Content-Type: text/html; charset=UTF-8',"From: $blog_name <$from_email>");
         if($args['mensions'] && is_array($args['mensions'])){
 
                 $to = $args['mensions'];
                 $subject = 'You\'ve been mentioned in a note';
                 $body = str_replace(['%%NAME%%','%%TEXT%%','%%TITLE%%','%%BLOGNAME%%','%%CONTENT%%','%%HREF%%'],[ $args['name'], 'mentioned you on', $args['title'], $blog_name, $args['content'], $args['href']],$template);
-                $headers = array('Content-Type: text/html; charset=UTF-8');
+                
+                //$headers[] = 'From: Me Myself <me@example.net>';
 
             wp_mail( $to, $subject, $body, $headers );
         }
 
-        $to = $admin_mail;
+        $to = $admin_email;
         $subject = 'New note';
         $body = str_replace(['%%NAME%%','%%TEXT%%','%%TITLE%%','%%BLOGNAME%%','%%CONTENT%%','%%HREF%%'],[ $args['name'], 'posted a note on', $args['title'], $blog_name, $args['content'], $args['href']], $template);
-        $headers = array('Content-Type: text/html; charset=UTF-8');
+        //$headers = array('Content-Type: text/html; charset=UTF-8');
 
         wp_mail( $to, $subject, $body, $headers );
         
@@ -321,7 +334,7 @@ class Divi_Design_Notes
                 'pos'   => isset($data['pos']) ? $data['pos'] : 0,
                 'res' => $res,
             ); ?>
-            <span id="notemarker-<?php echo $parent_note->comment_ID; ?>" class="design_note_marker<?php echo $res ? ' resolved' :''; ?>" data-params=<?php echo "'", esc_attr(json_encode($dataJson)), "'"; ?>>
+            <span id="notemarker-<?php echo esc_attr($parent_note->comment_ID); ?>" class="design_note_marker<?php echo $res ? ' resolved' :''; ?>" data-params=<?php echo "'", esc_attr(json_encode($dataJson)), "'"; ?>>
                 <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 16 16">
                     <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
                 </svg>
@@ -338,7 +351,7 @@ class Divi_Design_Notes
                 <div class="design_note_dropdown_body">
                     <div class="design_note_dropdown_note">
                         <div class="design_note_dropdown_note_header">
-                            <span class="author"><?php echo $parent_note->comment_author; ?></span>
+                            <span class="author"><?php echo esc_html($parent_note->comment_author); ?></span>
                             <span class="time"><?php echo str_replace(' ','&nbsp;&nbsp;&nbsp;',$parent_note->comment_date); ?></span>
                         </div>
                         <div class="design_note_dropdown_note_body">
@@ -420,12 +433,12 @@ class Divi_Design_Notes
             'res' => $res,
         );
         ob_start(); ?>
-        <span id="notemarker-<?php echo $parent_note->comment_ID; ?>" class="design_note_marker" data-params=<?php echo "'", esc_attr(json_encode($dataJson)), "'"; ?>>
+        <span id="notemarker-<?php echo esc_attr($parent_note->comment_ID); ?>" class="design_note_marker" data-params=<?php echo "'", esc_attr(json_encode($dataJson)), "'"; ?>>
             <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 16 16">
                 <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
             </svg>
         </span>
-        <div id="notedropdown-<?php echo $parent_note->comment_ID; ?>" class="design_note_dropdown">
+        <div id="notedropdown-<?php echo esc_attr($parent_note->comment_ID); ?>" class="design_note_dropdown">
             <div class="design_note_dropdown_header">
                 <span class="author">Note:</span>
                 <?php if (!$res) { ?>
@@ -459,7 +472,7 @@ class Divi_Design_Notes
         ob_start(); ?>
         <div class="design_note_dropdown_note">
             <div class="design_note_dropdown_note_header">
-                <span class="author"><?php echo $child->comment_author; ?></span>
+                <span class="author"><?php echo esc_html($child->comment_author); ?></span>
                 <span class="time"><?php echo str_replace(' ','&nbsp;&nbsp;&nbsp;',$child->comment_date); ?></span>
             </div>
             <div class="design_note_dropdown_note_body">
