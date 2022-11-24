@@ -13,12 +13,18 @@ export default function shadowMarker( element ){
             y:0
         },
         getElSelector(){
-            return '.' + Array.from(self.relatedElement.classList).join('.');
+            if(self.relatedElement.id){
+                return '#' + self.relatedElement.id;
+            }
+            if(self.relatedElement.classList){
+                return '.' + Array.from(self.relatedElement.classList).join('.');
+            }
+            return '#page-container';
         },
         pinOnPage( relatedElement,position ) {
             self.position = position;
             self.relatedElement = relatedElement;
-            self.active = true
+            self.active = true;
             self.element.classList.remove('active')
             if(self.getRelativity()){
                 self.setRelPosition();

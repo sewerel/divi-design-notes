@@ -155,6 +155,8 @@ class Divi_Design_Notes
                     $note = get_comment($new_note);
                     $output = $this->generate_parent_html($note);
                     $success = 1;
+                    // TO DO: change with better solution then reasining again
+                    $args['content'] = $content['text'];
                     $this->send_mails($args);
                 }
                 wp_send_json(['success' => $success, 'html' => $output]);
@@ -171,7 +173,7 @@ class Divi_Design_Notes
                     DELETE FROM $wpdb->comments 
                     WHERE comment_parent = %d
                     ",
-                        $id,
+                        $id
                     )
                 );
                 $parent_deleted = $wpdb->query(
@@ -180,7 +182,7 @@ class Divi_Design_Notes
                     DELETE FROM $wpdb->comments 
                     WHERE comment_ID = %d
                     ",
-                        $id,
+                        $id
                     )
                 );
                 wp_send_json(['parent' => $parent_deleted, 'children' => $children_deleted]);
@@ -218,7 +220,7 @@ class Divi_Design_Notes
         $blog_name = get_option( 'blogname' );
         ob_start();
         include(plugin_dir_path( __FILE__ ).'assets/mail/mail.php');
-        $template = ob_get_clean();
+        $template   = ob_get_clean();
         $sitename   = wp_parse_url( network_home_url(), PHP_URL_HOST );
 		$from_email = 'noreply@';
 
@@ -248,7 +250,6 @@ class Divi_Design_Notes
 
         wp_mail( $to, $subject, $body, $headers );
         
-
     }
 
     public function enqueue_scripts(){
@@ -300,7 +301,7 @@ class Divi_Design_Notes
                 'parent' => null, 
                 'href'   => '#',
                 'title'  => __('Design Notes', 'text-domain')
-                ),
+                )
             );
     }
 
@@ -332,7 +333,7 @@ class Divi_Design_Notes
             $dataJson = array(
                 'el'    => isset($data['el']) ? $data['el'] : 0,
                 'pos'   => isset($data['pos']) ? $data['pos'] : 0,
-                'res' => $res,
+                'res' => $res
             ); ?>
             <span id="notemarker-<?php echo esc_attr($parent_note->comment_ID); ?>" class="design_note_marker<?php echo $res ? ' resolved' :''; ?>" data-params=<?php echo "'", esc_attr(json_encode($dataJson)), "'"; ?>>
                 <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 16 16">
@@ -430,7 +431,7 @@ class Divi_Design_Notes
         $dataJson = array(
             'el'    => isset($data['el']) ? $data['el'] : 0,
             'pos'   => isset($data['pos']) ? $data['pos'] : 0,
-            'res' => $res,
+            'res' => $res
         );
         ob_start(); ?>
         <span id="notemarker-<?php echo esc_attr($parent_note->comment_ID); ?>" class="design_note_marker" data-params=<?php echo "'", esc_attr(json_encode($dataJson)), "'"; ?>>
@@ -489,7 +490,7 @@ class Divi_Design_Notes
             'comment_author'    => $args['name'],
             'comment_approved'  => 'note',
             'comment_content'   => $args['content'],
-            'comment_parent'    => $args['parent_id'],
+            'comment_parent'    => $args['parent_id']
         );
         return wp_insert_comment($params);
     }

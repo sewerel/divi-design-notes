@@ -13,6 +13,6 @@ $wpdb->query(
         DELETE FROM $wpdb->comments 
         WHERE comment_type = %s
         ",
-        'divi_design_note',
+        'divi_design_note'
     )
 );

@@ -39,7 +39,7 @@ export default function shadowDropDown(marker, element){
             })
             return stringMensions;
         },
-        setPosition: ()=>{
+        setPosition(){
             if(!self.active) return;
             const rects = self.marker.element.getBoundingClientRect();
             const fromLeft = rects.x < 175 ? 1 : 0;
@@ -51,7 +51,7 @@ export default function shadowDropDown(marker, element){
                 switch(fromBottom + fromLeft + fromRight) {
                     case 1: //Left
                     case 4: //Left & Right
-                        translate = `translateX(-${rects.x}px)`
+                        translate = `translateX(${-rects.x}px)`
                         break;
                     case 3: //Right
                         translate = `translateX(-${350-(innerWidth - rects.right)}px)`
@@ -60,7 +60,7 @@ export default function shadowDropDown(marker, element){
                         translate = `translate(-50%,-100%) translate(15px,-40px)`
                         break;
                     case 6: //Left & Bottom
-                        translate = `translate(-${rects.x}px,-100%) translateY(-40px)`
+                        translate = `translate(${-rects.x}px,-100%) translateY(-40px)`
                         break;
                     case 8: //Right & Bottom
                         translate = `translate(-${350-(innerWidth - rects.right)}px,-100%) translateY(-40px)`
@@ -70,7 +70,6 @@ export default function shadowDropDown(marker, element){
                         break;
                     }
             }
-            
             self.element.style.top = `${rects.bottom}px`;
             self.element.style.left = `${rects.x}px`;
             self.element.style.transform = translate;

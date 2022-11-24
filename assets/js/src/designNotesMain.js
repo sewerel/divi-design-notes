@@ -94,6 +94,7 @@ export default function DesignNotesMain(button, dataElement){
                 const textToCaret = input.value.substring(0, input.selectionStart);
                 const match = textToCaret.match(/@(?<text>[a-z]{0,3})$/i);
                 if(match){
+                    self.textToCaret = textToCaret;
                     self.currenMatch = match;
                     input.parentElement.appendChild(self.usersNode);
                     if(match.groups.text){
@@ -117,7 +118,8 @@ export default function DesignNotesMain(button, dataElement){
             const user = e.target;
             const input = self.inputTarget;
             const rejex = new RegExp(`${self.currenMatch[0]}$`,'g');
-            input.value = input.value.replace(rejex, `@${user.dataset.userName} `);
+            const swapText = self.textToCaret.replace(rejex, ` @${user.dataset.userName} `);
+            input.value = input.value.replace(self.textToCaret, swapText);
             input.focus();
             input.setSelectionRange(input.value.length + 1, input.value.length + 1);
             self.usersNode.remove();
@@ -168,7 +170,16 @@ export default function DesignNotesMain(button, dataElement){
             if( self.markerActive ){
                 self.stopMarker()
             }
-            if(self.menu){return;}
+            if(self.menu){
+                if(self.notes.length){
+                    self.setPositions();
+                }
+                return;
+            }
+            if(!self.pageContainer){
+                console.warn('No #page-container element on the page!')
+                return;
+            }
             //Menu
             self.menu = Menu(self.pageContainer);
             self.menu.init();
