@@ -119,6 +119,7 @@ export default function DropDown(marker, element){
         post(){
             if(!self.textArea.value.trim()){
                 self.textArea.value = '';
+                self.ajaxing(false)
                 return;
             }
             self.ajaxing(true);

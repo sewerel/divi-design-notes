@@ -1,0 +1,257 @@
+#design-notes-container {
+    width: calc(100% - 20px);
+    overflow: hidden;
+}
+
+#design-notes-container svg {
+    pointer-events: none;
+}
+
+#design-notes-container button {
+    cursor: pointer;
+    transition: all .25s ease;
+    color: #fff;
+}
+
+#design-notes-container button:hover {
+    animation-name: design_notes_button_hover;
+    animation-duration: .3s;
+    animation-fill-mode: forwards;
+}
+
+#design-notes-container .view,
+#design-notes-container .delete {
+    background: #29c4a9;
+    margin-right: 20px;
+    color: #fff;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+#design-notes-container .delete {
+    margin-right: 0;
+    background-color: #ef5555;
+}
+
+#design-notes-screen {
+    display: flex;
+    width: 200%;
+    transition: all .3s ease-in-out;
+}
+
+#design-notes-screen[data-screen="view"] {
+    transform: translateX(-50%);
+}
+
+#design-notes-screen[data-status="resolved"] button[data-action="resolve"] {
+    display: none;
+}
+
+#design-notes-screen.ajaxing {
+    pointer-events: none;
+}
+
+#design-notes-screen *.ajaxing {
+    position: relative;
+}
+
+#design-notes-screen *.ajaxing::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgb(255, 255, 255, .7);
+    z-index: 1;
+}
+
+#design-notes-screen *.ajaxing::after {
+    content: '';
+    top: 50%;
+    left: 50%;
+    position: absolute;
+    display: inline-block;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    border: 5px solid rgba(0, 0, 0, 0.66);
+    -webkit-mask: conic-gradient(#0000, #000);
+    mask: conic-gradient(#0000, #000);
+    box-sizing: border-box;
+    animation: design_notes_loading 1s linear infinite;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+}
+
+#design-notes-table {
+    flex: 0 0 50%;
+    background-color: #fff;
+    border-radius: 5px;
+    overflow-x: scroll;
+    scrollbar-width: thin;
+    scrollbar-color: #333 transparent;
+}
+
+#design-notes-table::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+#design-notes-table::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 3px;
+}
+
+#design-notes-table table {
+    background-color: #fff;
+    border-radius: 5px;
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 800px;
+}
+
+#design-notes-table thead {
+    text-align: left;
+}
+
+#design-notes-table tfoot {
+    border-top: 1px solid #aeb0b1;
+}
+
+#design-notes-table #note_pagination,
+#design-notes-table #note_pagination input {
+    text-align: center;
+}
+
+
+#design-notes-table tr {
+    animation-name: design-notes-appear;
+    animation-duration: .3s;
+    animation-fill-mode: forwards;
+    opacity: 0;
+    transform: translateX(10%);
+}
+
+
+#design-notes-table td,
+#design-notes-table th {
+    padding: 8px 10px;
+}
+
+#design-notes-table tbody tr:nth-child(odd) {
+    background-color: #f1f5f9;
+}
+
+#design-notes-preview {
+    flex: 0 0 50%;
+}
+
+.preview-container {
+    width: 600px;
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    margin: auto;
+    background: #fff;
+    border-radius: 5px;
+    max-height: 100%;
+    overflow: hidden;
+}
+
+
+.preview-header {
+    display: flex;
+    padding: 10px;
+    border-radius: 5px 5px 0 0;
+    background-color: #5e24ac;
+    color: #fff;
+}
+
+.preview-header button {
+    background: transparent;
+    border: none;
+    outline: none;
+}
+
+.preview-body {
+    overflow-y: scroll;
+    padding: 15px 20px;
+    overflow-y: scroll;
+    scrollbar-width: thin;
+    scrollbar-color: #333 transparent;
+}
+
+.preview-body::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.preview-body::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 3px;
+}
+
+.note-content span {
+    color: #589adf;
+}
+
+.preview-note:not(:first-child) {
+    border-top: 1px solid #aeb0b1;
+}
+
+.preview-note:not(.edit) button[data-action="save"],
+.preview-note:not(.edit) button[data-action="cancel"],
+.preview-note.edit button[data-action="edit"],
+.preview-note.edit button[data-action="delete"] {
+    display: none;
+}
+
+.preview-note-header {
+    display: flex;
+    flex-direction: row;
+    padding-top: 10px;
+}
+
+.preview-note-header .author {
+    flex-grow: 1;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.preview-note-header .time {
+    font-size: 12px;
+    font-weight: 400;
+    color: #a2b0c1;
+}
+
+.preview-note .actions {
+    text-align: right;
+}
+
+@keyframes design-notes-appear {
+    to {
+        opacity: 1;
+        transform: translateX(0)
+    }
+}
+
+@keyframes design_notes_button_hover {
+    50% {
+        opacity: .5;
+    }
+
+    100% {
+        opacity: .7;
+    }
+}
+
+@keyframes design_notes_loading {
+    to {
+        transform: translate(-50%, -50%) rotate(1turn)
+    }
+}

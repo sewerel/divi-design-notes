@@ -1,0 +1,27 @@
+
+
+
+## [2.0.2] – 2025-10-08
+
+### 🐛 Bug Fixes
+
+* Fixed admin page when status changed the changes not applied to the table
+
+## [2.0.0] – 2023-12-10
+
+### 🚀 New Features
+
+* Notes are now stored as a custom post type
+* Added an admin page with sorting and editing functionality
+
+---
+
+## [1.0.2] – 2022-11-30
+
+### 🛠 Improvements
+
+* Swapped `/` and `'` with their corresponding HTML entities
+
+### 🐛 Bug Fixes
+
+* Fixed unexpected behavior when using `/` or `'` in a note

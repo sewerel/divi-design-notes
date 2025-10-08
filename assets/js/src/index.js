@@ -2,7 +2,9 @@ import DesignNotesMain from './designNotesMain.js'
 import DesignNote from './designNote.js'
 import Marker from './marker'
 import {on, select} from './helpers.js'
+(function(){
 window.addEventListener('load', function(){
+
 
     const button = select('#wp-admin-bar-design_notes');
     if(button){
@@ -11,7 +13,6 @@ window.addEventListener('load', function(){
             window[Symbol.for('diviDesignNotesAPI')].init();
         },button)
     }
-
     window[Symbol.for('diviDesignNotesAPI')] = DesignNotesMain();
-
-});
+})
+})()
