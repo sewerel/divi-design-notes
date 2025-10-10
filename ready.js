@@ -53,7 +53,7 @@ archive.glob(
       //ignore filename.ext 
       '**ready.js',
       //ignore json extension all over
-      '*.json']
+      '**.json']
 
   },
   {

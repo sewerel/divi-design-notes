@@ -66,6 +66,10 @@ body .design_note_marker.active {
     display: none !important;
 }
 
+.design_note_dropdown:not(.resolved) [data-action=restore] {
+    display: none !important;
+}
+
 .design_note_textarea {
     display: inline-block;
     width: 100%;
@@ -159,6 +163,7 @@ body .design_note_dropdown.open {
     font-size: 17px;
 }
 
+.design_note_dropdown_header span[data-action=restore],
 .design_note_dropdown_header span[data-action=delete],
 .design_note_dropdown_header span[data-action=resolve] {
     width: 35px;
@@ -174,6 +179,10 @@ body .design_note_dropdown.open {
 
 .design_note_dropdown_header span[data-action=resolve] {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23fff' viewBox='0 0 16 16'%3E%3Cpath d='M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm10.03 4.97a.75.75 0 0 1 .011 1.05l-3.992 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.75.75 0 0 1 1.08-.022z'/%3E%3C/svg%3E");
+}
+
+.design_note_dropdown_header span[data-action=restore] {
+    background-image: url("data: image/svg+xml, %3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%22-2%200%2024%2024%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M5.62132%207L7.06066%208.43934C7.64645%209.02513%207.64645%209.97487%207.06066%2010.5607C6.47487%2011.1464%205.52513%2011.1464%204.93934%2010.5607L0.93934%206.56066C0.35355%205.97487%200.35355%205.02513%200.93934%204.43934L4.93934%200.43934C5.52513%20-0.146447%206.47487%20-0.146447%207.06066%200.43934C7.64645%201.02513%207.64645%201.97487%207.06066%202.56066L5.62132%204H10C15.5228%204%2020%208.47715%2020%2014C20%2019.5228%2015.5228%2024%2010%2024C4.47715%2024%200%2019.5228%200%2014C0%2013.1716%200.67157%2012.5%201.5%2012.5C2.32843%2012.5%203%2013.1716%203%2014C3%2017.866%206.13401%2021%2010%2021C13.866%2021%2017%2017.866%2017%2014C17%2010.134%2013.866%207%2010%207H5.62132z%22%20fill%3D%22%23fff%22%3E%3C%2Fpath%3E%3C%2Fsvg%3E");
 }
 
 .design_note_dropdown_header span.button:hover {
@@ -312,6 +321,25 @@ body .design_note_dropdown.open {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
     box-shadow: 0 0 18px 0 rgba(0, 0, 0, 0.3);
     user-select: none;
+}
+
+#divi_design_notes_message {
+    position: fixed;
+    bottom: 20px;
+    right: 0;
+    overflow: hidden;
+    z-index: 100000001;
+    user-select: none;
+}
+
+#divi_design_notes_message div {
+    padding: 15px;
+    font-size: 14px;
+    background: #fff;
+    border: 2px solid #5e24ac;
+    border-radius: 5px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    color: #32373c;
 }
 
 .design_notes_menu_header {

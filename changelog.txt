@@ -1,6 +1,21 @@
 
 
 
+## [2.1.0] – 2025-10-08
+
+### 🚀 New Features
+
+* Now notes are trashed first and can be accessed with filtering trashed Status in the admin area
+* Notes can be restored in order "Trashed" -> "Resolved" -> "Active" from admin area View screen
+* Notes can be restored from "Resolved" to "Active"
+* Frontend menu remembers seleted view preferences
+* Trashed notes are automatically deleted in 30 days
+* Displaing Note ID for reference 
+* In admin area "View" screen displays page related link and Note ID
+* New info bar appers upon deletion, trash, post, create new, resolve and restored
+* New info bar gives feedback what has happen or if "Something is wrong" suggests reload the page
+
+---
 ## [2.0.2] – 2025-10-08
 
 ### 🐛 Bug Fixes

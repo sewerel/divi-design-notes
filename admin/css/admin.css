@@ -47,6 +47,14 @@
     transform: translateX(-50%);
 }
 
+#design-notes-screen[data-screen="table"][data-status="all"] button[data-action="delete"],
+#design-notes-screen[data-screen="table"][data-status="trashed"] button[data-action="trash"],
+#design-notes-screen[data-screen="view"][data-status="trashed"] button[data-action="trash_parent"],
+#design-notes-screen[data-screen="view"][data-status="trashed"] button[data-action="resolve"],
+#design-notes-screen[data-screen="view"][data-status="trashed"] button[data-action="delete"],
+#design-notes-screen[data-screen="table"][data-status="active"] button[data-action="delete"],
+#design-notes-screen[data-status="resolved"] button[data-action="delete"],
+#design-notes-screen[data-status="active"] button[data-action="restore"],
 #design-notes-screen[data-status="resolved"] button[data-action="resolve"] {
     display: none;
 }
@@ -254,4 +262,32 @@
     to {
         transform: translate(-50%, -50%) rotate(1turn)
     }
+}
+
+.preview-note-page {
+    padding: 10px 0 0;
+    border-top: 1px solid #000;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    justify-content: space-between;
+}
+
+#divi_design_notes_message {
+    position: fixed;
+    top: 50px;
+    right: 0;
+    overflow: hidden;
+    z-index: 100000001;
+    user-select: none;
+}
+
+#divi_design_notes_message div {
+    padding: 15px;
+    font-size: 14px;
+    background: #fff;
+    border: 2px solid #5e24ac;
+    border-radius: 5px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    color: #32373c;
 }

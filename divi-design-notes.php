@@ -2,7 +2,7 @@
 /*
 Plugin Name:        Divi Design Notes
 Plugin URI:         https://divi-design-notes.powdithemes.com
-Version:            2.0.3
+Version:            2.1.0
 Description:        Divi Design Notes gives you the ability to pin, point and comment any part of your Divi design directly on your Divi website.
 Author:             Powdistudio LTD
 Author URI:         https://powdisudio.com

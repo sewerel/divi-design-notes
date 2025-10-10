@@ -1,7 +1,7 @@
-import { on } from "./helpers";
+import { on, message } from "./helpers";
 
 
-export default function DropDown(marker, element){
+export default function DropDown(marker, element) {
     const self = {
         element: element,
         marker: marker,
@@ -9,53 +9,53 @@ export default function DropDown(marker, element){
         textArea: null,
         is_ajaxing: false,
         mensions: [],
-        openClose(){
-            if(self.active){
+        openClose() {
+            if (self.active) {
                 self.close()
-            }else{
+            } else {
                 self.open()
             }
         },
-        open(){
+        open() {
             window[Symbol.for('diviDesignNotesAPI')].closeDropdowns();
             self.element.classList.add('open');
             self.active = true;
             self.setPosition()
         },
-        close(){
+        close() {
             self.element.classList.remove('open');
             self.active = false;
         },
-        checkMensions(string){
+        checkMensions(string) {
             self.mensions = [];
             let stringMensions = string;
-            window[Symbol.for('diviDesignNotesAPI')].data.users.forEach(user=>{
-                if(string.includes(`@${user.display_name}`)){
-                    stringMensions = stringMensions.replace(`@${user.display_name}`,`<span>@${user.display_name}</span>`);
-                  
-                    if(!self.mensions.indexOf(user.user_email)+1){
+            window[Symbol.for('diviDesignNotesAPI')].data.users.forEach(user => {
+                if (string.includes(`@${user.display_name}`)) {
+                    stringMensions = stringMensions.replace(`@${user.display_name}`, `<span>@${user.display_name}</span>`);
+
+                    if (!self.mensions.indexOf(user.user_email) + 1) {
                         self.mensions.push(user.user_email);
                     }
                 }
             })
             return stringMensions;
         },
-        setPosition(){
-            if(!self.active) return;
+        setPosition() {
+            if (!self.active) return;
             const rects = self.marker.element.getBoundingClientRect();
             const fromLeft = rects.x < 175 ? 1 : 0;
             const fromRight = ((innerWidth - rects.right) < 175) ? 3 : 0;
             const fromBottom = ((innerHeight - rects.bottom) < 200) ? 5 : 0;
             let translate = '';
 
-            if(fromBottom || fromRight || fromLeft){
-                switch(fromBottom + fromLeft + fromRight) {
+            if (fromBottom || fromRight || fromLeft) {
+                switch (fromBottom + fromLeft + fromRight) {
                     case 1: //Left
                     case 4: //Left & Right
                         translate = `translateX(${-rects.x}px)`
                         break;
                     case 3: //Right
-                        translate = `translateX(-${350-(innerWidth - rects.right)}px)`
+                        translate = `translateX(-${350 - (innerWidth - rects.right)}px)`
                         break;
                     case 5: //Bottom
                         translate = `translate(-50%,-100%) translate(15px,-40px)`
@@ -64,60 +64,85 @@ export default function DropDown(marker, element){
                         translate = `translate(${-rects.x}px,-100%) translateY(-40px)`
                         break;
                     case 8: //Right & Bottom
-                        translate = `translate(-${350-(innerWidth - rects.right)}px,-100%) translateY(-40px)`
+                        translate = `translate(-${350 - (innerWidth - rects.right)}px,-100%) translateY(-40px)`
                         break;
                     case 9: //Left & Right & Bottom
                         translate = `translate(0,-100%) translateY(-40px)`
                         break;
-                    }
+                }
             }
-            
+
             self.element.style.top = `${rects.bottom}px`;
             self.element.style.left = `${rects.x}px`;
             self.element.style.transform = translate;
-            if(!fromBottom){
+            if (!fromBottom) {
                 self.element.style.maxHeight = `${innerHeight - rects.bottom}px`;
-            }else{
+            } else {
                 self.element.style.maxHeight = '';
             }
         },
-        clicked(e){
-            if(!e.target.dataset.action || self.is_ajaxing) return;
+        clicked(e) {
+            if (!e.target.dataset.action || self.is_ajaxing) return;
             self.ajaxing(true);
-            if(e.target.dataset.action === 'cancel'){
+            if (e.target.dataset.action === 'cancel') {
                 self.close();
                 self.ajaxing(false);
                 return;
             }
-            if(e.target.dataset.action === 'resolve'){
+            if (e.target.dataset.action === 'resolve') {
                 self.resolve();
                 return;
             }
-            if(e.target.dataset.action === 'post'){
+            if (e.target.dataset.action === 'restore') {
+                self.restore();
+                return;
+            }
+            if (e.target.dataset.action === 'post') {
                 self.post();
                 return;
             }
-            if(e.target.dataset.action === 'delete'){
+            if (e.target.dataset.action === 'delete') {
                 self.delete();
                 return;
             }
         },
-        resolve(){
+        resolve() {
             self.ajaxing(true);
             const data = new FormData();
             data.append('type', 'resolve')
             data.append('id', self.marker.id)
             window[Symbol.for('diviDesignNotesAPI')].ajax(data)
-            .then(res=>{if(res.ok)return res.json()})
-            .then(json => {
-                self.marker.element.classList.add('resolved')
-                self.element.classList.add('resolved')
-                self.ajaxing(false);
-            }).catch(err =>{self.ajaxing(false)});
-            
+                .then(res => { if (res.ok) return res.json() })
+                .then(json => {
+                    self.marker.element.classList.add('resolved')
+                    self.element.classList.add('resolved')
+                    message(`Note: ${self.marker.id} has been set to status: "Resolved"`);
+                    self.ajaxing(false);
+                }).catch(err => {
+                    message(`Something went wrong try refreshing the page.`);
+                    self.ajaxing(false)
+                });
+
         },
-        post(){
-            if(!self.textArea.value.trim()){
+        restore() {
+            self.ajaxing(true);
+            const data = new FormData();
+            const id = self.marker.id;
+            data.append('type', 'restore')
+            data.append('id', id)
+            data.append('status', 'resolved')
+            window[Symbol.for('diviDesignNotesAPI')].ajax(data)
+                .then(res => { if (res.ok) return res.json() })
+                .then(json => {
+                    self.marker.element.classList.remove('resolved')
+                    self.element.classList.remove('resolved')
+                    self.ajaxing(false);
+                    message(`Note: ${id} has been set to status: "Active"`);
+                }).catch(err => { self.ajaxing(false) });
+
+        },
+        post() {
+            if (!self.textArea.value.trim()) {
                 self.textArea.value = '';
                 self.ajaxing(false)
                 return;
@@ -126,7 +151,7 @@ export default function DropDown(marker, element){
             const data = new FormData();
             const content = self.checkMensions(self.textArea.value);
 
-            if(self.mensions.length){
+            if (self.mensions.length) {
                 data.append('mensions', self.mensions.join(','))
             }
             data.append('type', 'post')
@@ -136,54 +161,64 @@ export default function DropDown(marker, element){
             data.append('href', window[Symbol.for('diviDesignNotesAPI')].data.href)
             data.append('title', window[Symbol.for('diviDesignNotesAPI')].data.title)
             window[Symbol.for('diviDesignNotesAPI')].ajax(data)
-            .then(res=>{if(res.ok)return res.json()})
-            .then(obj => {
-                if(obj.success){
-                    const body = self.element.querySelector('.design_note_dropdown_body')
-                    body.insertAdjacentHTML('beforeend',obj.html)
-                    self.textArea.value = '';
-                }
-                self.ajaxing(false);
-            }).catch(err =>{self.ajaxing(false)});
+                .then(res => { if (res.ok) return res.json() })
+                .then(obj => {
+                    if (obj.success) {
+                        const body = self.element.querySelector('.design_note_dropdown_body')
+                        body.insertAdjacentHTML('beforeend', obj.html)
+                        self.textArea.value = '';
+                        message('Your reply has been posted.');
+                    }
+                    self.ajaxing(false);
+                }).catch(err => {
+                    message(`Something went wrong try refreshing the page.`);
+                    self.ajaxing(false)
+                });
         },
-        delete(){
+        delete() {
             self.ajaxing(true);
             const data = new FormData();
-            data.append('type', 'delete')
-            data.append('note_id', self.marker.id)
+            const id = self.marker.id;
+            data.append('type', 'trash')
+            data.append('id', id)
             window[Symbol.for('diviDesignNotesAPI')].ajax(data)
-            .then(res=>{if(res.ok)return res.json()})
-            .then(obj => {
-                if(obj.parent){
-                    window[Symbol.for('diviDesignNotesAPI')].delete(self.marker);
-                }else{
+                .then(res => { if (res.ok) return res.json() })
+                .then(obj => {
+                    if (obj.trashed) {
+                        window[Symbol.for('diviDesignNotesAPI')].delete(self.marker);
+                        message(`Note: ${id} has been moved to Trash`);
+                    } else {
+                        message(`Something went wrong try refreshing the page.`);
+                        self.ajaxing(false)
+                    }
+                }).catch(err => {
+                    message(`Something went wrong try refreshing the page.`);
                     self.ajaxing(false)
-                }
-            }).catch(err =>{self.ajaxing(false)});
+                });
         },
-        ajaxing(flag = null){
-            if(flag === null){
+        ajaxing(flag = null) {
+            if (flag === null) {
                 return self.is_ajaxing;
             }
-            if(flag){
+            if (flag) {
                 self.element.classList.add('ajaxing');
                 self.is_ajaxing = true;
             }
-            if(!flag){
+            if (!flag) {
                 self.element.classList.remove('ajaxing');
                 self.is_ajaxing = false;
             }
         },
-        init(){
+        init() {
             self.textArea = self.element.querySelector('textarea');
             document.body.appendChild(self.element);
             on('click', self.clicked, self.element);
         }
 
-        
+
     };
     self.init();
-    
+
     return self;
 
 

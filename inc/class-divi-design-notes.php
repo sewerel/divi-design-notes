@@ -49,6 +49,7 @@ class Divi_Design_Notes {
         add_action('edit_user_profile_update', [$this, 'user_meta_update'], 1, 1);
 
         add_action('admin_menu', [$this, 'admin_menu']);
+        add_action('load-toplevel_page_design_notes', [$this, 'cleanupTrashedNotes']);
         add_action('edit_user_created_user', [$this, 'wipe_out_user_cache'], 10, 1);
         add_action('profile_update', [$this, 'wipe_out_user_cache'], 10, 1);
         add_action('deleted_user', [$this, 'wipe_out_user_cache'], 10, 1);
@@ -128,6 +129,27 @@ class Divi_Design_Notes {
         global $wpdb;
         include($this->plugin_path . 'inc/update.php');
     }
+    function cleanupTrashedNotes() {
+        $args = [
+            'post_type'      => 'divi_design_notes',
+            'post_status'    => 'trashed',
+            'fields'         => 'ids',
+            'posts_per_page' => 10,
+            'date_query'     => [
+                [
+                    'column' => 'post_modified_gmt',
+                    'before' => '30 days ago',
+                ],
+            ],
+        ];
+
+        $old_note_ids = get_posts($args);
+        if ($old_note_ids) {
+            foreach ($old_note_ids as $note) {
+                $this->delete_note($note->ID);
+            }
+        }
+    }
     function admin_menu() {
         add_menu_page('Design Notes', 'Design Notes', 'manage_options', 'design_notes', [$this, 'admin_page'], 'dashicons-excerpt-view', 6);
     }
@@ -156,11 +178,33 @@ class Divi_Design_Notes {
             wp_send_json(['No type in the resolve ajax']);
         }
         if ($type === 'resolve' && $id) {
+
             $args = [
                 'ID' =>           $id,
                 'post_status' => 'resolved'
             ];
             wp_send_json(['resolved' => $this->insert_design_note_post($args)]);
+        }
+        if ($type === 'restore' && $id) {
+            $status = !empty($_REQUEST['status']) ? sanitize_key($_REQUEST['status']) : false;
+            if ($status && in_array($status, ['trashed', 'resolved'])) {
+                $new_status = ($status === 'resolved') ? 'active' : 'resolved';
+                $args = [
+                    'ID' =>           $id,
+                    'post_status' => $new_status
+                ];
+                if ($this->insert_design_note_post($args)) {
+                    wp_send_json(['status' => $new_status]);
+                }
+            }
+        }
+        if ($type === 'trash' && $id) {
+
+            $args = [
+                'ID' =>           $id,
+                'post_status' => 'trashed'
+            ];
+            wp_send_json(['trashed' => $this->insert_design_note_post($args)]);
         }
         if ($type === 'post') {
             $args = [];
@@ -178,6 +222,9 @@ class Divi_Design_Notes {
                 $success = 0;
                 if ($new_note) {
                     $note = get_post($new_note);
+                    if ($args['mensions']) {
+                        update_post_meta($new_note, 'divi_design_note_mensions', $args['mensions']);
+                    }
                     $this->grab_note_author_name($note);
                     $output = $this->generate_child_html($note);
                     $success = 1;
@@ -211,6 +258,9 @@ class Divi_Design_Notes {
                 $success = 0;
                 if ($new_note) {
                     update_post_meta($new_note, 'divi_design_notes_meta', $args['data']);
+                    if ($args['mensions']) {
+                        update_post_meta($new_note, 'divi_design_note_mensions', $args['mensions']);
+                    }
                     $note = get_post($new_note);
                     $note->data = $args['data'];
                     $this->grab_note_author_name($note);
@@ -222,34 +272,12 @@ class Divi_Design_Notes {
             }
         }
         if ($type === 'delete') {
-            global $wpdb;
             if (!empty($_REQUEST['note_id']) && (int) $_REQUEST['note_id'] > 0) {
+
                 $id = absint($_REQUEST['note_id']);
-                $delete_children_query_string = "
-                    DELETE FROM $wpdb->posts 
-                    WHERE post_type = 'divi_design_notes'
-                    AND post_parent = %d
-                    ";
-                $delete_parent_query_string = "
-                    DELETE FROM $wpdb->posts 
-                    WHERE post_type = 'divi_design_notes'
-                    AND ID = %d
-                    ";
-                $delete_postmeta_query_string = "
-                        DELETE FROM $wpdb->postmeta 
-                        WHERE post_id = %d
-                        ";
-                // WordPress.DB.DirectDatabaseQuery.DirectQuery WordPress.DB.DirectDatabaseQuery.NoCaching
-                //phpcs:ignore
-                $children_deleted = $wpdb->query($wpdb->prepare($delete_children_query_string, $id));
-                //phpcs:ignore
-                $parent_deleted = $wpdb->query($wpdb->prepare($delete_parent_query_string, $id));
-                $meta_deleted = 0;
-                if ($parent_deleted || $children_deleted) {
-                    //phpcs:ignore
-                    $meta_deleted = $wpdb->query($wpdb->prepare($delete_postmeta_query_string, $id));
-                }
-                wp_send_json(['parent' => $parent_deleted, 'children' => $children_deleted, 'meta' => $meta_deleted]);
+                $deletion_result = $this->delete_note($id);
+
+                wp_send_json($deletion_result);
             }
             wp_send_json(['parent' => 0, 'children' => 0]);
         }
@@ -451,7 +479,7 @@ class Divi_Design_Notes {
                 m.meta_value AS 'data'
                 FROM $wpdb->posts p
                 LEFT JOIN $wpdb->postmeta m ON p.ID=m.post_id AND m.meta_key='divi_design_notes_meta'
-                WHERE p.post_type = 'divi_design_notes' AND p.comment_count=%d";
+                WHERE p.post_type = 'divi_design_notes' AND p.comment_count=%d AND p.post_status != 'trashed'";
         // WordPress.DB.DirectDatabaseQuery.DirectQuery
         //phpcs:ignore
         return $wpdb->get_results($wpdb->prepare($select_current_post_notes_mysql, [(int) $this->post->ID]));
@@ -506,12 +534,13 @@ class Divi_Design_Notes {
             </span>
             <div id="notedropdown-<?php echo esc_attr($parent_note->ID); ?>" class="design_note_dropdown<?php echo esc_attr($res_class); ?>">
                 <div class="design_note_dropdown_header">
-                    <span class="author">Note:</span>
+                    <span class="author">Note ID: <?php echo esc_attr($parent_note->ID); ?></span>
+                    <span data-action="restore" class="button" title="Restore!"></span>
                     <?php if (!$res) { ?>
                         <span data-action="resolve" class="button" title="Mark Resolved"></span>
                     <?php }
                     if ($this->user_is_admin) { ?>
-                        <span data-action="delete" class="button" title="Delete note"></span>
+                        <span data-action="delete" class="button" title="Trash note"></span>
                     <?php } ?>
                 </div>
                 <div class="design_note_dropdown_body">
@@ -535,9 +564,7 @@ class Divi_Design_Notes {
                     <textarea class="design_note_textarea" placeholder="Type your reply. Use @ to mension" id=""></textarea>
                 </div>
                 <div class="design_note_dropdown_footer">
-                    <?php if ($parent_note->post_status == 'active') { ?>
-                        <button data-action="post" class="post-note">Post note</button>
-                    <?php } ?>
+                    <button data-action="post" class="post-note">Post note</button>
                     <button data-action="cancel" class="cancel">Close</button>
                 </div>
 
@@ -550,7 +577,7 @@ class Divi_Design_Notes {
         </span>
         <div id="shadowdropdown" class="design_note_dropdown">
             <div class="design_note_dropdown_header">
-                <span class="author">Note:</span>
+                <span class="author">Note ID:</span>
             </div>
             <div class="design_note_dropdown_note_form">
                 <textarea class="design_note_textarea" placeholder="Type your reply. Use @ to mension" id=""></textarea>
@@ -608,12 +635,13 @@ class Divi_Design_Notes {
         </span>
         <div id="notedropdown-<?php echo esc_attr($id); ?>" class="design_note_dropdown">
             <div class="design_note_dropdown_header">
-                <span class="author">Note:</span>
+                <span class="author">Note: <?php echo esc_attr($parent_note->ID); ?></span>
+                <span data-action="restore" class="button" title="Restore!"></span>
                 <?php if ($res == 'active') { ?>
                     <span data-action="resolve" class="button" title="Mark Resolved"></span>
                 <?php }
                 if ($this->user_is_admin) { ?>
-                    <span data-action="delete" class="button" title="Delete note"></span>
+                    <span data-action="delete" class="button" title="Trash note"></span>
                 <?php } ?>
             </div>
             <div class="design_note_dropdown_body">
@@ -652,17 +680,45 @@ class Divi_Design_Notes {
         </div>
 <?php return ob_get_clean();
     }
-    public function delete_note($args) {
+    public function delete_note($id) {
 
 
         global $wpdb;
-        $params = array(
-            'comment_count'  => $args['post_id'],
-            'post_author'    => $this->current_user->ID,
-            'post_content'   => $args['content'],
-            'post_parent'    => $args['parent_id']
-        );
-        return $this->insert_design_note_post($params);
+
+        $delete_children_meta_query_string = "
+                DELETE FROM $wpdb->postmeta 
+                WHERE post_id IN (SELECT ID FROM $wpdb->posts 
+                WHERE post_type = 'divi_design_notes'
+                AND post_parent = %d)
+                ";
+        $delete_children_query_string = "
+                    DELETE FROM $wpdb->posts 
+                    WHERE post_type = 'divi_design_notes'
+                    AND post_parent = %d
+                    ";
+        $delete_parent_query_string = "
+                    DELETE FROM $wpdb->posts 
+                    WHERE post_type = 'divi_design_notes'
+                    AND ID = %d
+                    ";
+        $delete_postmeta_query_string = "
+                        DELETE FROM $wpdb->postmeta 
+                        WHERE post_id = %d
+                        ";
+        // WordPress.DB.DirectDatabaseQuery.DirectQuery WordPress.DB.DirectDatabaseQuery.NoCaching
+        //phpcs:ignore
+        $children_meta_deleted = $wpdb->query($wpdb->prepare($delete_children_meta_query_string, $id));
+        // WordPress.DB.DirectDatabaseQuery.DirectQuery WordPress.DB.DirectDatabaseQuery.NoCaching
+        //phpcs:ignore
+        $children_deleted = $wpdb->query($wpdb->prepare($delete_children_query_string, $id));
+        //phpcs:ignore
+        $parent_deleted = $wpdb->query($wpdb->prepare($delete_parent_query_string, $id));
+        $meta_deleted = 0;
+        if ($parent_deleted || $children_deleted) {
+            //phpcs:ignore
+            $meta_deleted = $wpdb->query($wpdb->prepare($delete_postmeta_query_string, $id));
+        }
+        return ['parent' => $parent_deleted, 'children' => $children_deleted, 'meta' => $meta_deleted];
     }
     public function insert_note($args) {
 
@@ -712,11 +768,17 @@ class Divi_Design_Notes {
 
         if ($update) {
 
-            if (in_array($postarr['post_status'], ['active', 'resolved'])) {
+            if (in_array($postarr['post_status'], ['active', 'resolved', 'trashed'])) {
                 $data = ['post_status' => $postarr['post_status']];
             } elseif (!empty($postarr['post_content'])) {
                 $data = ['post_content' => $postarr['post_content']];
             }
+            if (empty($data)) {
+                return 0;
+            }
+            $data['post_modified'] = current_time('mysql');
+            $data['post_modified_gmt'] = current_time('mysql');
+
             $where = ['ID' => $post_id];
             $data  = wp_unslash($data);
             // WordPress.DB.DirectDatabaseQuery.DirectQuery

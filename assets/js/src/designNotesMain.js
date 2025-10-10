@@ -1,31 +1,32 @@
-import {select, on, off, renderElement} from './helpers.js';
+import { select, on, off, renderElement } from './helpers.js';
 import Marker from './marker';
 import shadowMarker from './shadowMarker';
 import Menu from './menu';
 
-export default function DesignNotesMain(button, dataElement){
+export default function DesignNotesMain(button, dataElement) {
     const self = {
-        button : select('#wp-admin-bar-design_notes'),
+        button: select('#wp-admin-bar-design_notes'),
         pageContainer: select('#page-container'),
         templatesContainer: select('#design_notes_template'),
 
-        data : JSON.parse(select('#divi_design_notes_json').textContent),
+        data: JSON.parse(select('#divi_design_notes_json').textContent),
         notes: [],
         menu: null,
-        hoveredElement : false,
-        user : '',
-        markerActive : false,
-        shadowMarker : null,
-        timeout : 0,
-        currenMatch : null,
-        inputTarget : null,
-        caret : null,
-        usersNode : document.createElement('ul'),
-        buttonClicked (e) {
+        hoveredElement: false,
+        user: '',
+        markerActive: false,
+        shadowMarker: null,
+        timeout: 0,
+        currenMatch: null,
+        inputTarget: null,
+        caret: null,
+        usersNode: document.createElement('ul'),
+        messageElement: null,
+        buttonClicked(e) {
             e.preventDefault();
-            if(self.markerActive){
+            if (self.markerActive) {
                 self.stopMarker();
-            }else{
+            } else {
                 self.startMarker();
             }
             return self;
@@ -35,32 +36,32 @@ export default function DesignNotesMain(button, dataElement){
             self.closeDropdowns();
             self.shadowMarker.reset();
             self.shadowMarker.activate(self.pageContainer);
-            on('mousemove', self.followMarker, self.pageContainer );
+            on('mousemove', self.followMarker, self.pageContainer);
             self.markerActive = true;
             document.body.classList.add('marker-active');
             on('click', self.markerClicked, self.pageContainer);
         },
         stopMarker() {
-            off('mousemove', self.followMarker, self.pageContainer );
+            off('mousemove', self.followMarker, self.pageContainer);
             self.shadowMarker.element.remove();
             self.markerActive = false;
             document.body.classList.remove('marker-active');
             off('click', self.markerClicked, self.pageContainer);
-            if(self.hoveredElement) self.hoveredElement.style.outline = '';
+            if (self.hoveredElement) self.hoveredElement.style.outline = '';
 
         },
         followMarker(e) {
             let module = e.target.matches('.et_pb_module') ? e.target : e.target.closest('.et_pb_module,.et_pb_row,.et_pb_section,header,#page-container');
-            if(module){
-                if(module !== self.hoveredElement){
-                    if(self.hoveredElement){
+            if (module) {
+                if (module !== self.hoveredElement) {
+                    if (self.hoveredElement) {
                         self.hoveredElement.style.outline = '';
                     }
                     self.hoveredElement = module;
                     self.hoveredElement.style.outline = '3px solid blue';
                 }
-            }else{
-                if(self.hoveredElement){
+            } else {
+                if (self.hoveredElement) {
                     self.hoveredElement.style.outline = '';
                     self.hoveredElement = false;
                 }
@@ -68,48 +69,48 @@ export default function DesignNotesMain(button, dataElement){
 
             self.shadowMarker.element.style.transform = `translate3d(${e.clientX}px,${e.clientY}px,0)`;
         },
-        markerClicked (e) {
+        markerClicked(e) {
             e.preventDefault();
-            off('mousemove', self.followMarker, self.pageContainer );
+            off('mousemove', self.followMarker, self.pageContainer);
             off('click', self.markerClicked, self.pageContainer);
             const rects = self.hoveredElement.getBoundingClientRect();
             const position = {
-                x: e.x -  rects.x,
-                y: e.y -  rects.y,
+                x: e.x - rects.x,
+                y: e.y - rects.y,
             }
-            self.shadowMarker.pinOnPage(self.hoveredElement,position);
+            self.shadowMarker.pinOnPage(self.hoveredElement, position);
             self.markerActive = false;
             document.body.classList.remove('marker-active');
-            if(self.hoveredElement) self.hoveredElement.style.outline = '';
+            if (self.hoveredElement) self.hoveredElement.style.outline = '';
         },
-        createNote(html){
-            const node = renderElement(html, self.templatesContainer,'afterbegin');
+        createNote(html) {
+            const node = renderElement(html, self.templatesContainer, 'afterbegin');
             const newNote = Marker(node).init()
             self.notes.push(newNote);
             newNote.openClose()
         },
-        inputHandler(e){
-            if(e.target.matches('.design_note_textarea')){
+        inputHandler(e) {
+            if (e.target.matches('.design_note_textarea')) {
                 const input = self.inputTarget = e.target;
                 const textToCaret = input.value.substring(0, input.selectionStart);
                 const match = textToCaret.match(/@(?<text>[a-z]{0,3})$/i);
-                if(match){
+                if (match) {
                     self.textToCaret = textToCaret;
                     self.currenMatch = match;
                     input.parentElement.appendChild(self.usersNode);
-                    if(match.groups.text){
+                    if (match.groups.text) {
                         const usersMatched = self.data.users.filter(user => user.display_name.toLowerCase().includes(match.groups.text.toLowerCase()))
                         self.usersNode.innerHTML = self.usersListItems(usersMatched)
-                    }else{
+                    } else {
                         self.usersNode.innerHTML = self.usersListItems(self.data.users)
                     }
-                }else{
+                } else {
                     self.usersNode.remove();
                 }
             }
         },
-        closeDropdowns(){
-            self.notes.forEach(marker=>{
+        closeDropdowns() {
+            self.notes.forEach(marker => {
                 marker.dropDown.close();
             });
             self.shadowMarker.dropDown.close();
@@ -117,14 +118,14 @@ export default function DesignNotesMain(button, dataElement){
         chooseUser(e) {
             const user = e.target;
             const input = self.inputTarget;
-            const rejex = new RegExp(`${self.currenMatch[0]}$`,'g');
+            const rejex = new RegExp(`${self.currenMatch[0]}$`, 'g');
             const swapText = self.textToCaret.replace(rejex, ` @${user.dataset.userName} `);
             input.value = input.value.replace(self.textToCaret, swapText);
             input.focus();
             input.setSelectionRange(input.value.length + 1, input.value.length + 1);
             self.usersNode.remove();
         },
-        setPositions(){
+        setPositions() {
             self.notes.forEach((item) => {
                 item.setPosition();
                 item.dropDown.setPosition();
@@ -132,53 +133,57 @@ export default function DesignNotesMain(button, dataElement){
             self.shadowMarker.setPosition();
             self.shadowMarker.dropDown.setPosition();
         },
-        maybeSetTimeout(e){
-            if(self.timeout){
+        maybeSetTimeout(e) {
+            if (self.timeout) {
                 clearTimeout(self.timeout);
             }
-            self.timeout = setTimeout(()=>{
+            self.timeout = setTimeout(() => {
                 self.setPositions();
                 self.timeout = 0;
             }, 100);
         },
-        ajax(data){
+        ajax(data) {
             data.append('action', 'divi_design_notes_ajax')
             data.append('diviDesignNotesNonce', self.data.nonce)
-            return fetch(self.data.ajaxurl,{
+            return fetch(self.data.ajaxurl, {
                 method: 'POST',
                 body: data
             })
         },
-        setMarkers(){
+        setMarkers() {
             const selectedMarkers = select('[id^=notemarker]', self.templatesContainer, true);
             selectedMarkers.forEach(node => {
                 self.notes.push(Marker(node).init());
                 return;
             });
         },
-        delete($marker){
+        delete($marker) {
             $marker.dropDown.element.remove();
             $marker.element.remove();
-            self.notes.splice(self.notes.indexOf($marker),1);
+            self.notes.splice(self.notes.indexOf($marker), 1);
         },
-        usersListItems(list){
+        usersListItems(list) {
             return html = list.map(user => {
                 return `<li data-user-name="${user.display_name}">${user.display_name}<span>${user.user_email}</span></li>`;
             }).join('');
         },
-        init(){
-            if( self.markerActive ){
+        init() {
+            if (self.markerActive) {
                 self.stopMarker()
             }
-            if(self.menu){
-                if(self.notes.length){
+            if (self.menu) {
+                if (self.notes.length) {
                     self.setPositions();
                 }
                 return;
             }
-            if(!self.pageContainer){
+            if (!self.pageContainer) {
                 console.warn('No #page-container element on the page!')
                 return;
+            }
+            if (!self.messageElement) {
+                self.messageElement = document.createElement('div');
+                self.messageElement.id = 'divi_design_notes_message';
             }
             //Menu
             self.menu = Menu(self.pageContainer);
@@ -200,7 +205,7 @@ export default function DesignNotesMain(button, dataElement){
                 return;
             });
             //ShadowMarker
-            const elem =  select('#shadowmarker', self.templatesContainer);
+            const elem = select('#shadowmarker', self.templatesContainer);
             self.shadowMarker = shadowMarker(elem).init();
 
             on('click', self.chooseUser, self.usersNode);
@@ -211,9 +216,9 @@ export default function DesignNotesMain(button, dataElement){
             on('transitionend', self.maybeSetTimeout, self.pageContainer);
 
         },
-        
+
     };
-   
+
 
     return self;
 }

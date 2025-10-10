@@ -1,11 +1,12 @@
 (function () {
-    let data;
+    // let data;
     let filter = {};
     //Variables
     let isAjaxing = false;
     let page = 1;
     let pages = 0;
     let perPage = 10;
+    let status = 'all';
 
     //HTMLElemenst
     const {
@@ -26,6 +27,9 @@
     const previewBody = preview.querySelector('.preview-body');
     const tableBody = table.querySelector('tbody');
     const pagination = table.querySelector('#note_pagination');
+    const messageElement = document.createElement('div');
+    messageElement.id = 'divi_design_notes_message';
+
 
     //Listeners
     window.addEventListener('resize', screenSizing);
@@ -37,6 +41,30 @@
     fetchData(render);
 
     //Methods
+    function message(text) {
+        messageElement.innerHTML = `<div>${text}</div>`;
+        const message = messageElement.firstElementChild;
+
+        document.body.appendChild(messageElement);
+
+        const animation = message.animate(
+            [
+                { opacity: 0, transform: 'translateX(100%)' },  // start (offscreen)
+                { opacity: 1, transform: 'translateX(0)', offset: 0.1 }, // slide in
+                { opacity: 1, transform: 'translateX(0)', offset: 0.9 }, // stay visible
+                { opacity: 0, transform: 'translateX(100%)' }  // slide out
+            ],
+            {
+                duration: 4000, // total 4 seconds
+                easing: 'ease',
+                fill: 'forwards'
+            }
+        );
+
+        // Remove element after animation ends
+        animation.onfinish = () => messageElement.remove();
+    }
+
     function tableChanged(e) {
         const name = e.target.name;
         const value = e.target.value;
@@ -53,6 +81,7 @@
                 case 'status':
                     filter.post_status = value;
                     page = 1;
+                    screen.dataset.status = status = value;
                     break;
                 case 'per_page':
                     perPage = parseInt(value);
@@ -87,6 +116,7 @@
                         previewBody.insertAdjacentHTML('beforeend', text);
                     }
                 }
+                previewBody.insertAdjacentHTML('beforeend', previewPageInfoTmp(obj));
                 screen.dataset.screen = 'view';
                 screen.dataset.note = obj.ID;
                 screen.dataset.status = obj.post_status;
@@ -114,11 +144,49 @@
                         animation.onfinish = () => {
                             tr.remove()
                         };
+                        message(`Note: ${target.dataset.id} has been deleted.`);
                         data.notes = data.notes.filter(note => note.ID != target.dataset.id);
                     } else {
                         window.location.reload();
                     }
                 })
+            } else if (target.dataset.action == 'trash') {
+                target.classList.add('ajaxing');
+                let id = target.dataset.id;
+                trashNote(id).then(result => {
+                    if (result.trashed && result.trashed != false) {
+                        target.classList.remove('ajaxing');
+                        const tr = target.closest('tr');
+                        const animation = tr.animate([{
+                            opacity: 1,
+                            transform: 'scaleX(1)'
+                        },
+                        {
+                            opacity: 0,
+                            transform: 'scaleX(1)'
+                        },
+                        {
+                            opacity: 0,
+                            transform: 'scaleX(0)'
+                        }
+
+                        ], {
+                            duration: 1000
+                        });
+                        animation.onfinish = () => {
+                            tr.remove()
+                        };
+                        data.notes.forEach(note => {
+                            if (note.ID == id) {
+                                note.post_status = 'trashed';
+                            }
+                        });
+                        message(`Note: ${id} has been set trashed`);
+                    } else {
+                        window.location.reload();
+                    }
+                });
+
             }
         }
     }
@@ -130,6 +198,7 @@
                 case 'table':
                     previewBody.innerHTML = '';
                     screen.dataset.screen = 'table';
+                    screen.dataset.status = status;
                     break;
                 case 'delete':
                     const button = ev.target;
@@ -159,6 +228,7 @@
                             animation.onfinish = () => {
                                 child.remove()
                             };
+                            message(`Note: ${id} has been deleted.`);
                             data.children[parent_id] = data.children[parent_id].filter(note => note.ID != id);
 
                         } else {
@@ -167,14 +237,20 @@
                         }
                     });
                     break;
-                case 'delete_parent':
+                case 'trash_parent':
                     preview.firstElementChild.classList.add('ajaxing');
-                    deleteNote(screen.dataset.note).then(result => {
-                        if (result.parent) {
+                    trashNote(screen.dataset.note).then(result => {
+                        if (result.trashed && result.trashed != false) {
                             preview.firstElementChild.classList.remove('ajaxing');
                             screen.dataset.screen = 'table';
-                            data.notes = data.notes.filter(note => note.ID != screen.dataset.note);
-                            displayContent(applyFilters());
+                            data.notes.forEach(note => {
+                                if (note.ID == screen.dataset.note) {
+                                    note.post_status = 'trashed';
+                                }
+                            });
+                            previewBody.innerHTML = '';
+                            message(`Note: ${screen.dataset.note} has been moved to Trash`);
+                            displayContent(applyFilters())
                         } else {
                             preview.firstElementChild.classList.remove('ajaxing');
                             location.reload();
@@ -192,7 +268,26 @@
                                     note.post_status = 'resolved';
                                 }
                             });
-
+                            message(`Note: ${screen.dataset.note} has been set to resolved.`);
+                            displayContent(applyFilters())
+                        } else {
+                            preview.firstElementChild.classList.remove('ajaxing');
+                            location.reload();
+                        }
+                    });
+                    break;
+                case 'restore':
+                    preview.firstElementChild.classList.add('ajaxing');
+                    restoreNote().then(result => {
+                        if (result.status && result.status != false) {
+                            screen.dataset.status = result.status;
+                            preview.firstElementChild.classList.remove('ajaxing');
+                            data.notes.forEach(note => {
+                                if (note.ID == screen.dataset.note) {
+                                    note.post_status = result.status;
+                                }
+                            });
+                            message(`Note: ${screen.dataset.note} has been set to ${result.status}.`);
                             displayContent(applyFilters())
                         } else {
                             preview.firstElementChild.classList.remove('ajaxing');
@@ -201,6 +296,8 @@
                     });
 
                     break;
+
+
             }
         }
     }
@@ -218,12 +315,38 @@
         }).then(res => res.json());
     }
 
+    function trashNote(id) {
+        const formData = new FormData();
+        formData.append('action', 'divi_design_notes_ajax');
+        formData.append('type', 'trash');
+        formData.append('id', parseInt(id));
+        formData.append('diviDesignNotesNonce', nonce);
+
+        return fetch(admin_url, {
+            method: 'POST',
+            body: formData
+        }).then(res => res.json());
+    }
+    function restoreNote() {
+        const formData = new FormData();
+        formData.append('action', 'divi_design_notes_ajax');
+        formData.append('type', 'restore');
+        formData.append('status', screen.dataset.status);
+        formData.append('id', parseInt(screen.dataset.note));
+        formData.append('diviDesignNotesNonce', nonce);
+
+        return fetch(admin_url, {
+            method: 'POST',
+            body: formData
+        }).then(res => res.json());
+    }
     function resolveNote() {
         const formData = new FormData();
         formData.append('action', 'divi_design_notes_ajax');
         formData.append('type', 'resolve');
         formData.append('id', parseInt(screen.dataset.note));
         formData.append('diviDesignNotesNonce', nonce);
+
 
         return fetch(admin_url, {
             method: 'POST',
@@ -233,6 +356,7 @@
 
     function parentTmp(obj, i = 0) {
         return `<tr style=" animation-delay:${i * 100}ms;">
+                        <td>${obj.ID}</td>
                         <td>${linkToPostTmp(obj)}</td>
                         <td>${obj.author_name}</td>
                         <td>${obj.post_date}</td>
@@ -240,9 +364,13 @@
                         <td>
                         <button data-id="${obj.ID}" data-action="view" class="view">View</button>
                         <button data-id="${obj.ID}" data-action="delete" class="delete">Delete</button>
+                        <button data-id="${obj.ID}" data-action="trash" class="delete">Trash</button>
                         </td>
                         <td>${data.children[obj.ID] ? data.children[obj.ID].length : '-'}</td>
                         </tr>`;
+    }
+    function previewPageInfoTmp(obj, i) {
+        return `<div class="preview-note-page"><span>Note ID: ${obj.ID} </span><span>Link: ${linkToPostTmp(obj)}</span></div>`;
     }
 
     function previwTmp(obj, i) {
@@ -373,7 +501,9 @@
             if (filter[prop] !== 'all') {
                 filtered = filtered.filter(note => note[prop] == filter[prop]);
             }
-
+        }
+        if (filter.post_status == undefined || filter.post_status == 'all') {
+            filtered = filtered.filter(note => note.post_status != 'trashed');
         }
         pages = Math.ceil(filtered.length / perPage);
         if (pages > 1) {
