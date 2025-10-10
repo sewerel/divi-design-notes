@@ -146,7 +146,7 @@ class Divi_Design_Notes {
         $old_note_ids = get_posts($args);
         if ($old_note_ids) {
             foreach ($old_note_ids as $note) {
-                $this->delete_note($note->ID);
+                $this->delete_note($note);
             }
         }
     }
@@ -682,6 +682,14 @@ class Divi_Design_Notes {
     }
     public function delete_note($id) {
 
+        $id = absint($id);
+        if (!$id) {
+            return ["Not Valid ID"];
+        }
+        $post = get_post($id);
+        if (!$post || $post->post_type !== 'divi_design_notes') {
+            return ["No Note with such ID"];
+        }
 
         global $wpdb;
 
