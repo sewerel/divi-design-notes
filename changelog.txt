@@ -1,6 +1,12 @@
 
 
 
+## [2.1.1] – 2025-10-08
+### 🐛 Bug Fixes
+
+* Fixed new version not applied to the scripts and styles
+* Old notes cleanup id sanitization
+
 ## [2.1.0] – 2025-10-08
 
 ### 🚀 New Features
